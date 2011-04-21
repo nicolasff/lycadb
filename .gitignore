@@ -1,0 +1,4 @@
+*.swp
+datafiles
+main
+*.o
