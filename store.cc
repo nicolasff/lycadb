@@ -2,10 +2,15 @@
 
 #include <string>
 #include <iostream>
+#include <cstring>
 
 #include <haildb.h>
 
 using namespace std;
+
+Store::Store(std::string db, std::string table) :
+	m_db(db), m_table(db + "/" + table) {
+}
 
 bool
 Store::startup() {
@@ -20,6 +25,8 @@ Store::startup() {
 	err = ib_cfg_set("log_group_home_dir", "./datafiles/");
 	err = ib_cfg_set("buffer_pool_size", 512);
 	err = ib_cfg_set("flush_log_at_trx_commit", 2);
+	err = ib_cfg_set_bool_on("adaptive_hash_index");
+	err = ib_cfg_set_bool_on("adaptive_flushing");
 
 	// actually start HailDB
 	err = ib_startup("barracuda");
@@ -46,7 +53,7 @@ Store::install() {
 
 bool
 Store::createDb() {
-	return (ib_database_create("db0") == IB_TRUE);
+	return (ib_database_create(m_db.c_str()) == IB_TRUE);
 }
 
 bool
@@ -56,7 +63,7 @@ Store::createTable() {
 	ib_tbl_sch_t schema = NULL;
 
 	// create schema
-	if((err = ib_table_schema_create("db0/main", &schema, IB_TBL_COMPACT, 0)) != DB_SUCCESS) {
+	if((err = ib_table_schema_create(m_table.c_str(), &schema, IB_TBL_COMPACT, 0)) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -106,7 +113,6 @@ Store::createTable() {
 	ib_table_schema_delete(schema);
 
 	return ret;
-
 }
 
 bool
@@ -119,7 +125,7 @@ Store::set(string &k, string &v) {
 
 	// open cursor
 	ib_crsr_t cursor = NULL;
-	if((err = ib_cursor_open_table("db0/main", trx, &cursor)) != DB_SUCCESS) {
+	if((err = ib_cursor_open_table(m_table.c_str(), trx, &cursor)) != DB_SUCCESS) {
 		cerr << ib_strerror(err) << endl;
 	}
 
@@ -150,6 +156,17 @@ Store::set(string &k, string &v) {
 			ib_tuple_delete(old_row);
 			err = ib_trx_rollback(trx);
 			return false;
+		}
+
+		// compare to new value
+		if(ib_col_get_len(old_row, 1) == v.size() &&
+			::memcmp(ib_col_get_value(old_row, 1), v.c_str(), v.size()) == 0) {
+			// same value!
+
+			err = ib_cursor_close(cursor);
+			ib_tuple_delete(old_row);
+			err = ib_trx_rollback(trx);
+			return true;
 		}
 
 		// update value

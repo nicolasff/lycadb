@@ -96,7 +96,7 @@ thread_main(void *p) {
 
 int
 main() {
-	Store s;
+	Store s("db0", "main");
 	s.startup();
 	s.install();
 

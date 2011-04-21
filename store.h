@@ -6,6 +6,7 @@
 class Store {
 
 public:
+	Store(std::string db, std::string table);
 	bool startup();
 	bool shutdown();
 
@@ -17,6 +18,8 @@ public:
 private:
 	bool createDb();
 	bool createTable();
+
+	std::string m_db, m_table;
 };
 
 #endif
