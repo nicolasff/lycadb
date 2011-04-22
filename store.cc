@@ -22,8 +22,8 @@ Store::startup() {
 	err = ib_init();
 
 	// configure a few options
-	err = ib_cfg_set("data_home_dir", "./datafiles/");
-	err = ib_cfg_set("log_group_home_dir", "./datafiles/");
+	err = ib_cfg_set("data_home_dir", "/tmp/");
+	err = ib_cfg_set("log_group_home_dir", "/tmp/");
 	err = ib_cfg_set("buffer_pool_size", 512);
 	err = ib_cfg_set("flush_log_at_trx_commit", 2);
 	err = ib_cfg_set_bool_on("adaptive_hash_index");
