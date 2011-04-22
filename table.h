@@ -9,21 +9,13 @@ class Table {
 public:
 	Table(std::string name);
 
-	bool create();
-
-	// basic key management
-	bool get(std::string key, std::string &val);
-	bool set(std::string key, std::string val);
-
-	// increment
-	bool incr(std::string key, int by = 1);
-	bool decr(std::string key, int by = 1);
+	virtual bool create() = 0;
 
 	// deletion
-	bool del(std::string key);
+	virtual bool del(std::string key);
 	bool flushall();
 
-private:
+protected:
 
 	bool
 	get_cursor(std::string &key, ib_trx_t &trx,

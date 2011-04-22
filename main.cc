@@ -28,7 +28,7 @@ main() {
 	s.startup();
 	s.install();
 	cout << "Benchmarking, please wait." << endl;
-#if 0
+#if 1
 
 	// start with an empty table.
 	s.flushall();

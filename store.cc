@@ -10,7 +10,7 @@
 using namespace std;
 
 Store::Store(string db) :
-	m_db(db), m_table(db + "/main") {
+	m_db(db), m_main(db + "/main") {
 }
 
 bool
@@ -49,7 +49,7 @@ Store::shutdown() {
 bool
 Store::install() {
 
-	return this->createDb() && m_table.create();
+	return this->createDb() && m_main.create();
 }
 
 bool
@@ -57,3 +57,35 @@ Store::createDb() {
 	return (ib_database_create(m_db.c_str()) == IB_TRUE);
 }
 
+
+// basic key management
+bool
+Store::get(string key, string &val) {
+	return m_main.get(key, val);
+}
+
+bool
+Store::set(string key, string val) {
+	return m_main.set(key, val);
+}
+
+// increment
+bool
+Store::incr(string key, int by){
+	return m_main.incr(key, by);
+}
+
+bool
+Store::decr(string key, int by) {
+	return m_main.decr(key, by);
+}
+
+bool
+Store::del(string key) {
+	return m_main.del(key);
+}
+
+bool
+Store::flushall() {
+	return m_main.flushall();
+}
