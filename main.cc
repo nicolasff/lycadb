@@ -100,6 +100,7 @@ main() {
 	s.startup();
 	s.install();
 
+#if 0
 	struct timespec t0, t1, t2;
 	clock_gettime(CLOCK_MONOTONIC, &t0);	// timing
 
@@ -137,6 +138,15 @@ main() {
 
 	cout << "SET: " << (mili1-mili0) / 1000 << " sec. (" << (1000 * n / (mili1-mili0)) << "/sec)" << endl;
 	cout << "GET: " << (mili2-mili1) / 1000 << " sec. (" << (1000 * n / (mili2-mili1)) << "/sec)" << endl;
+#endif
+
+	// s.set("hello", "41");
+	s.incr("hello");
+	s.incr("hello");
+	string v;
+	s.get("hello", v);
+
+	cout << "v=[" << v << "]" << endl;
 
 	s.shutdown();
 

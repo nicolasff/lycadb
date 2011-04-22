@@ -3,12 +3,13 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <sstream>
 
 #include <haildb.h>
 
 using namespace std;
 
-Store::Store(std::string db, std::string table) :
+Store::Store(string db, string table) :
 	m_db(db), m_table(db + "/" + table) {
 }
 
@@ -116,7 +117,176 @@ Store::createTable() {
 }
 
 bool
-Store::set(string &k, string &v) {
+Store::incr(string key, int by) {
+
+	bool ret = false;
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(get_cursor(key, trx, cursor, row) == false) {
+		return false;
+	}
+
+	if(row) {	// increment
+		stringstream ss;
+		int i = 0;
+
+		// read value
+		string s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
+		if(s.empty()) {
+			i = 0;
+		} else {
+			ss << s;
+
+			// convert to number and increment
+			ss >> i;
+			ss.clear();
+			ss.str("");
+		}
+
+		// convert back to string and update row.
+		ss << (i + by);
+		ret = update_row(cursor, row, ss.str());
+
+	} else { // insert with value = "1".
+		ret = insert_row(cursor, key, "1");
+	}
+
+	// finish up.
+	if(ret) {
+		commit(trx, cursor, row);
+	} else {
+		rollback(trx, cursor, row);
+	}
+	return ret;
+}
+
+bool
+Store::decr(string key, int by) {
+	return incr(key, -by);
+}
+
+bool
+Store::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
+	
+	ib_err_t err;
+
+	// compare to new value
+	if(ib_col_get_len(row, 1) == val.size() &&
+		::memcmp(ib_col_get_value(row, 1), val.c_str(), val.size()) == 0) {
+		// same value!
+		return true;
+	}
+
+	// update value
+	ib_tpl_t new_row = ib_clust_read_tuple_create(cursor);
+	err = ib_tuple_copy(new_row, row);
+	err = ib_col_set_value(new_row, 1, val.c_str(), val.size());
+
+	// insert new value in place.
+	if((err = ib_cursor_update_row(cursor, row, new_row)) != DB_SUCCESS) {
+		ib_tuple_delete(new_row);
+		return false;
+	}
+
+	// delete row object
+	ib_tuple_delete(new_row);
+	return true;
+}
+
+
+bool
+Store::insert_row(ib_crsr_t cursor, string key, string val) {
+	
+	ib_err_t err;
+
+	// create row
+	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
+	
+	// set key and val columns
+	err = ib_col_set_value(row, 0, key.c_str(), key.size());
+	err = ib_col_set_value(row, 1, val.c_str(), val.size());
+
+	// insert row
+	bool ret = (ib_cursor_insert_row(cursor, row) == DB_SUCCESS);
+
+	// delete row object
+	ib_tuple_delete(row);
+
+	return ret;
+}
+
+void
+Store::commit(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
+	
+	ib_err_t err;
+
+	if(cursor) err = ib_cursor_close(cursor);
+	if(row) ib_tuple_delete(row);
+	if(trx) err = ib_trx_commit(trx);
+}
+
+void
+Store::rollback(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
+	ib_err_t err;
+
+	if(cursor) err = ib_cursor_close(cursor);
+	if(row) ib_tuple_delete(row);
+	if(trx) err = ib_trx_commit(trx);
+}
+
+bool
+Store::get_cursor(string &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
+
+	ib_err_t err;
+	ib_tpl_t search_row;
+	
+	// begin transaction
+	trx = ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+	// open cursor
+	cursor = 0;
+	if((err = ib_cursor_open_table(m_table.c_str(), trx, &cursor)) != DB_SUCCESS) {
+		cerr << ib_strerror(err) << endl;
+	}
+
+	// create seach tuple, handling update case.
+	search_row = ib_clust_search_tuple_create(cursor);
+
+	// set key column
+	err = ib_col_set_value(search_row, 0, key.c_str(), key.size());
+
+	// look for existing key
+	int pos = -1;
+	err = ib_cursor_moveto(cursor, search_row, IB_CUR_GE, &pos);
+
+	// error handling
+	if(err != DB_SUCCESS && err != DB_END_OF_INDEX) {
+		rollback(trx, cursor, search_row);
+		return false;
+	}
+	ib_tuple_delete(search_row); // no need for it anymore, we're positionned.
+
+	if(pos == 0) { // return existing row.
+		row = ib_clust_read_tuple_create(cursor);
+
+		// read existing row
+		if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+			rollback(trx, cursor, row);
+			row = 0;
+			return false;
+		}
+	} else {
+		// no row found, but cursor in place.
+		row = 0;
+	}
+
+	return true;
+}
+
+bool
+Store::set(string k, string v) {
 
 	ib_err_t err;
 	
@@ -221,7 +391,7 @@ Store::set(string &k, string &v) {
 }
 
 bool
-Store::get(string &k, string &v) {
+Store::get(string k, string &v) {
 
 	ib_err_t err;
 	
@@ -230,7 +400,7 @@ Store::get(string &k, string &v) {
 
 	// open cursor
 	ib_crsr_t cursor = NULL;
-	if((err = ib_cursor_open_table("db0/main", trx, &cursor)) != DB_SUCCESS) {
+	if((err = ib_cursor_open_table(m_table.c_str(), trx, &cursor)) != DB_SUCCESS) {
 		cerr << ib_strerror(err) << endl;
 	}
 
