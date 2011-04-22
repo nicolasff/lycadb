@@ -140,7 +140,7 @@ main() {
 	cout << "GET: " << (mili2-mili1) / 1000 << " sec. (" << (1000 * n / (mili2-mili1)) << "/sec)" << endl;
 #endif
 
-	// s.set("hello", "41");
+	s.set("hello", "41");
 	s.incr("hello");
 	s.incr("hello");
 	string v;

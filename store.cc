@@ -169,7 +169,7 @@ Store::decr(string key, int by) {
 
 bool
 Store::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
-	
+
 	ib_err_t err;
 
 	// compare to new value
@@ -198,12 +198,12 @@ Store::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
 
 bool
 Store::insert_row(ib_crsr_t cursor, string key, string val) {
-	
+
 	ib_err_t err;
 
 	// create row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
-	
+
 	// set key and val columns
 	err = ib_col_set_value(row, 0, key.c_str(), key.size());
 	err = ib_col_set_value(row, 1, val.c_str(), val.size());
@@ -219,7 +219,7 @@ Store::insert_row(ib_crsr_t cursor, string key, string val) {
 
 void
 Store::commit(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
-	
+
 	ib_err_t err;
 
 	if(cursor) err = ib_cursor_close(cursor);
@@ -241,7 +241,7 @@ Store::get_cursor(string &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) 
 
 	ib_err_t err;
 	ib_tpl_t search_row;
-	
+
 	// begin transaction
 	trx = ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
@@ -286,167 +286,67 @@ Store::get_cursor(string &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) 
 }
 
 bool
-Store::set(string k, string v) {
+Store::set(string key, string val) {
 
-	ib_err_t err;
-	
-	// begin transaction
-	ib_trx_t trx = ib_trx_begin(IB_TRX_REPEATABLE_READ);
+	bool ret = false;
 
-	// open cursor
-	ib_crsr_t cursor = NULL;
-	if((err = ib_cursor_open_table(m_table.c_str(), trx, &cursor)) != DB_SUCCESS) {
-		cerr << ib_strerror(err) << endl;
-	}
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
 
-	// create seach tuple, handling update case.
-	ib_tpl_t search_tpl = ib_clust_search_tuple_create(cursor);
-
-	// set key column
-	err = ib_col_set_value(search_tpl, 0, k.c_str(), k.size());
-
-	// look for existing key
-	int pos = -1;
-	err = ib_cursor_moveto(cursor, search_tpl, IB_CUR_GE, &pos);
-	ib_tuple_delete(search_tpl);
-
-	// error handling
-	if(err != DB_SUCCESS && err != DB_END_OF_INDEX) {
-		err = ib_cursor_close(cursor);
-		err = ib_trx_rollback(trx);
+	// get table cursor
+	if(get_cursor(key, trx, cursor, row) == false) {
 		return false;
 	}
 
-	if(pos == 0) { // update existing row.
-		ib_tpl_t old_row = ib_clust_read_tuple_create(cursor);
+	if(row) { // existing value
 
-		// read existing row
-		if((err = ib_cursor_read_row(cursor, old_row)) != DB_SUCCESS) {
-			err = ib_cursor_close(cursor);
-			ib_tuple_delete(old_row);
-			err = ib_trx_rollback(trx);
-			return false;
-		}
+		string old((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 
-		// compare to new value
-		if(ib_col_get_len(old_row, 1) == v.size() &&
-			::memcmp(ib_col_get_value(old_row, 1), v.c_str(), v.size()) == 0) {
-			// same value!
-
-			err = ib_cursor_close(cursor);
-			ib_tuple_delete(old_row);
-			err = ib_trx_rollback(trx);
+		if(old == val) {	// no need to update
+			rollback(trx, cursor, row);
 			return true;
+		} else {
+			// convert back to string and update row.
+			ret = update_row(cursor, row, val);
 		}
 
-		// update value
-		ib_tpl_t new_row = ib_clust_read_tuple_create(cursor);
-		err = ib_tuple_copy(new_row, old_row);
-		err = ib_col_set_value(new_row, 1, v.c_str(), v.size());
 
-		// insert new value in place.
-		if((err = ib_cursor_update_row(cursor, old_row, new_row)) != DB_SUCCESS) {
-			err = ib_cursor_close(cursor);
-			ib_tuple_delete(old_row);
-			ib_tuple_delete(new_row);
-			err = ib_trx_rollback(trx);
-			return false;
-		}
-
-		// delete row object
-		ib_tuple_delete(new_row);
-		ib_tuple_delete(old_row);
-
-	} else { // no existing row, insert new.
-
-		ib_tpl_t new_row = ib_clust_read_tuple_create(cursor);
-		
-		// set key and val columns
-		err = ib_col_set_value(new_row, 0, k.c_str(), k.size());
-		err = ib_col_set_value(new_row, 1, v.c_str(), v.size());
-
-		// insert row
-		if((err = ib_cursor_insert_row(cursor, new_row)) != DB_SUCCESS) {
-			err = ib_cursor_close(cursor);
-			ib_tuple_delete(new_row);
-			err = ib_trx_rollback(trx);
-			return false;
-		}
-
-		// delete row object
-		ib_tuple_delete(new_row);
-	}
-	
-	// close cursor
-	if((err = ib_cursor_close(cursor)) != DB_SUCCESS) {
-		err = ib_trx_rollback(trx);
-		return false;
+	} else { // insert value.
+		ret = insert_row(cursor, key, val);
 	}
 
-	// commit transaction
-	if((err = ib_trx_commit(trx)) != DB_SUCCESS) {
-		return false;
+	// finish up.
+	if(ret) {
+		commit(trx, cursor, row);
+	} else {
+		rollback(trx, cursor, row);
 	}
-	return true;
+	return ret;
 }
 
 bool
-Store::get(string k, string &v) {
+Store::get(string key, string &val) {
 
-	ib_err_t err;
-	
-	// begin transaction
-	ib_trx_t trx = ib_trx_begin(IB_TRX_REPEATABLE_READ);
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
 
-	// open cursor
-	ib_crsr_t cursor = NULL;
-	if((err = ib_cursor_open_table(m_table.c_str(), trx, &cursor)) != DB_SUCCESS) {
-		cerr << ib_strerror(err) << endl;
-	}
-
-	// create tuple
-	ib_tpl_t search_tpl = ib_clust_search_tuple_create(cursor);
-
-	// set key column
-	if((err = ib_col_set_value(search_tpl, 0, k.c_str(), k.size())) != DB_SUCCESS) {
-		cerr << "0:" << ib_strerror(err) << endl;
-	}
-
-	// move cursor
-	int res;
-	if((err = ib_cursor_moveto(cursor, search_tpl, IB_CUR_GE, &res)) != DB_SUCCESS) {
-		cerr << "m:" << ib_strerror(err) << endl;
-	}
-	ib_tuple_delete(search_tpl);
-	if(res != 0) {	// key not found
-		err = ib_cursor_close(cursor);
-		err = ib_trx_commit(trx);
+	// get table cursor
+	if(get_cursor(key, trx, cursor, row) == false) {
 		return false;
 	}
 
-	ib_tpl_t row_tpl = ib_clust_read_tuple_create(cursor);
-	// read row
-	if((err = ib_cursor_read_row(cursor, row_tpl)) != DB_SUCCESS) {
-		cerr << ib_strerror(err) << endl;
-	}
+	if(row) { // found value
 
-	// extract string
-	int sz;
-	const void *ptr;
-	sz = ib_col_get_len(row_tpl, 1);
-	ptr = ib_col_get_value(row_tpl, 1);
-	v = string((const char *)ptr, sz);
+		// copy to output parameter
+		val = string((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 
-	// close cursor
-	if((err = ib_cursor_close(cursor)) != DB_SUCCESS) {
-		cerr << "c:" << ib_strerror(err) << endl;
+		commit(trx, cursor, row);
+		return true;
+	} else {
+		rollback(trx, cursor, row);
+		return false;
 	}
-
-	// commit transaction
-	if((err = ib_trx_commit(trx)) != DB_SUCCESS) {
-		cerr << ib_strerror(err) << endl;
-	}
-	ib_tuple_delete(row_tpl);
-	return true;
 }
 
