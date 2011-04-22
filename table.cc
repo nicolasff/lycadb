@@ -63,6 +63,30 @@ Table::insert_row(ib_crsr_t cursor, string key, string val) {
 	return ret;
 }
 
+bool
+Table::create_primary_index(ib_tbl_sch_t &schema) {
+	
+	ib_err_t err;
+
+	// create primary key index.
+	ib_idx_sch_t pk_index = NULL;
+	if((err = ib_table_schema_add_index(schema, "PRIMARY_KEY", &pk_index)) != DB_SUCCESS) {
+		return false;
+	}
+
+	// add `key` column to primary index.
+	if((err = ib_index_schema_add_col(pk_index, "key", 0)) != DB_SUCCESS) {
+		return false;
+	}
+	// set clustered index.
+	if((err = ib_index_schema_set_clustered(pk_index)) != DB_SUCCESS) {
+		return false;
+	}
+
+	return true;
+}
+
+
 void
 Table::commit(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
 

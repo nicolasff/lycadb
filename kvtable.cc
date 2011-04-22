@@ -34,21 +34,9 @@ KVTable::create() {
 		return false;
 	}
 
-	// create primary key index.
-	ib_idx_sch_t index = NULL;
-	if((err = ib_table_schema_add_index(schema, "PRIMARY_KEY", &index)) != DB_SUCCESS) {
+	if(!create_primary_index(schema)) {
 		return false;
 	}
-
-	// add `key` column to primary index.
-	if((err = ib_index_schema_add_col(index, "key", 0)) != DB_SUCCESS) {
-		return false;
-	}
-	// set clustered index.
-	if((err = ib_index_schema_set_clustered(index)) != DB_SUCCESS) {
-		return false;
-	}
-
 
 	// begin transaction
 	return install_schema(schema);
