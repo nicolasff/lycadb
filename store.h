@@ -13,9 +13,11 @@ public:
 
 	bool install();
 
+	// basic key management
 	bool get(std::string key, std::string &val);
 	bool set(std::string key, std::string val);
 
+	// increment
 	bool incr(std::string key, int by = 1);
 	bool decr(std::string key, int by = 1);
 
