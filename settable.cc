@@ -37,7 +37,7 @@ SetTable::create() {
 	if(!create_primary_index(schema)) {
 		return false;
 	}
-	
+
 	if(!create_unique_index(schema)) {
 		return false;
 	}
@@ -50,7 +50,7 @@ bool
 SetTable::create_unique_index(ib_tbl_sch_t &schema) {
 
 	ib_err_t err;
-	
+
 	// create primary key index.
 	ib_idx_sch_t unique_index = NULL;
 	if((err = ib_table_schema_add_index(schema, "UNIQUE_KEY", &unique_index)) != DB_SUCCESS) {
@@ -106,6 +106,30 @@ SetTable::sadd(string key, string val) {
 	} else {
 		rollback(trx, cursor, row);
 	}
+	return ret;
+}
+
+
+bool
+SetTable::sismember(string key, string val) {
+
+	bool ret = false;
+
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	// get table cursor
+	if(get_cursor(key, val, trx, cursor, row) == false) {
+		return false;
+	}
+
+	// check if the row was found
+	ret = (row != 0);
+
+	// no write ops, rollback.
+	rollback(trx, cursor, row);
+
 	return ret;
 }
 

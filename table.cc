@@ -65,7 +65,7 @@ Table::insert_row(ib_crsr_t cursor, string key, string val) {
 
 bool
 Table::create_primary_index(ib_tbl_sch_t &schema) {
-	
+
 	ib_err_t err;
 
 	// create primary key index.

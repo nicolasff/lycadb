@@ -85,6 +85,13 @@ main() {
 		}
 	});
 
+	BENCH("SISMEMBER, returning false", n, {
+		// incr all.
+		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
+			s.sismember(kvi->first, kvi->second);
+		}
+	});
+
 	BENCH("SADD, new values", n, {
 		// incr all.
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
@@ -96,6 +103,13 @@ main() {
 		// incr all.
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
 			s.sadd(kvi->first, kvi->second);
+		}
+	});
+
+	BENCH("SISMEMBER, returning true", n, {
+		// incr all.
+		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
+			s.sismember(kvi->first, kvi->second);
 		}
 	});
 

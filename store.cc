@@ -99,3 +99,7 @@ Store::sadd(std::string key, std::string val) {
 	return m_sets.sadd(key, val);
 }
 
+bool
+Store::sismember(std::string key, std::string val) {
+	return m_sets.sismember(key, val);
+}

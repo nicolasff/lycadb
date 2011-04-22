@@ -27,6 +27,7 @@ public:
 
 	// sets
 	bool sadd(std::string key, std::string val);
+	bool sismember(std::string key, std::string val);
 
 	// deletion
 	bool del(std::string key);
