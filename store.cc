@@ -89,7 +89,9 @@ Store::del(string key) {
 
 bool
 Store::flushall() {
-	return m_main.flushall();
+	m_main.flushall();
+	m_sets.flushall();
+	return true;
 }
 
 bool

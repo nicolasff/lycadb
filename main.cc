@@ -28,7 +28,6 @@ main() {
 	s.startup();
 	s.install();
 	cout << "Benchmarking, please wait." << endl;
-#if 1
 
 	// start with an empty table.
 	s.flushall();
@@ -85,7 +84,20 @@ main() {
 			s.incr(kvi->first);
 		}
 	});
-#endif
+
+	BENCH("SADD, new values", n, {
+		// incr all.
+		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
+			s.sadd(kvi->first, kvi->second);
+		}
+	});
+
+	BENCH("SADD, existing values", n, {
+		// incr all.
+		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
+			s.sadd(kvi->first, kvi->second);
+		}
+	});
 
 	s.shutdown();
 

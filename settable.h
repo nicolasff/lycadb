@@ -14,6 +14,11 @@ public:
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 
+	bool
+	get_cursor(std::string &key, std::string &val,
+			ib_trx_t &trx, ib_crsr_t &cursor,
+			ib_tpl_t &row);
+
 };
 
 #endif
