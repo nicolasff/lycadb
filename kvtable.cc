@@ -50,26 +50,8 @@ KVTable::create() {
 	}
 
 
-	ib_id_t tid = 0; // table id
-
 	// begin transaction
-	bool ret = true;
-	ib_trx_t trx = ib_trx_begin(IB_TRX_SERIALIZABLE);
-	if((err = ib_schema_lock_exclusive(trx)) != DB_SUCCESS) {
-		ret = false;
-	}
-	if((err = ib_table_create(trx, schema, &tid)) != DB_SUCCESS) {
-		ret = false;
-	}
-	if((err = ib_schema_unlock(trx)) != DB_SUCCESS) {
-		ret = false;
-	}
-	if((err = ib_trx_commit(trx)) != DB_SUCCESS) {
-		ret = false;
-	}
-	ib_table_schema_delete(schema);
-
-	return ret;
+	return install_schema(schema);
 }
 
 bool

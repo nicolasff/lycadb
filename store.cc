@@ -10,7 +10,7 @@
 using namespace std;
 
 Store::Store(string db) :
-	m_db(db), m_main(db + "/main") {
+	m_db(db), m_main(db + "/main"), m_sets(db + "/sets") {
 }
 
 bool
@@ -49,7 +49,9 @@ Store::shutdown() {
 bool
 Store::install() {
 
-	return this->createDb() && m_main.create();
+	return this->createDb()
+		&& m_main.create()
+		&& m_sets.create();
 }
 
 bool
@@ -89,3 +91,9 @@ bool
 Store::flushall() {
 	return m_main.flushall();
 }
+
+bool
+Store::sadd(std::string key, std::string val) {
+	return m_sets.sadd(key, val);
+}
+

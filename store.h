@@ -5,6 +5,7 @@
 #include <haildb.h>
 
 #include "kvtable.h"
+#include "settable.h"
 
 class Store {
 
@@ -24,6 +25,10 @@ public:
 	bool incr(std::string key, int by = 1);
 	bool decr(std::string key, int by = 1);
 
+	// sets
+	bool sadd(std::string key, std::string val);
+
+	// deletion
 	bool del(std::string key);
 	bool flushall();
 
@@ -33,6 +38,7 @@ private:
 
 	std::string m_db;
 	KVTable m_main;
+	SetTable m_sets;
 };
 
 #endif

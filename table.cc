@@ -10,7 +10,7 @@
 using namespace std;
 
 Table::Table(string name)
-	: m_name(name) {
+	: m_name(name), m_tid(0) {
 
 }
 
@@ -41,7 +41,6 @@ Table::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
 	ib_tuple_delete(new_row);
 	return true;
 }
-
 
 bool
 Table::insert_row(ib_crsr_t cursor, string key, string val) {
@@ -164,3 +163,30 @@ Table::flushall() {
 	ib_id_t tid = 0;
 	return (ib_table_truncate(m_name.c_str(), &tid) == DB_SUCCESS);
 }
+
+bool
+Table::install_schema(ib_tbl_sch_t &schema) {
+
+	bool ret = true;
+
+	ib_err_t err;
+
+	ib_trx_t trx = ib_trx_begin(IB_TRX_SERIALIZABLE);
+	if((err = ib_schema_lock_exclusive(trx)) != DB_SUCCESS) {
+		ret = false;
+	}
+	if((err = ib_table_create(trx, schema, &m_tid)) != DB_SUCCESS) {
+		ret = false;
+	}
+	if((err = ib_schema_unlock(trx)) != DB_SUCCESS) {
+		ret = false;
+	}
+	if((err = ib_trx_commit(trx)) != DB_SUCCESS) {
+		ret = false;
+	}
+	ib_table_schema_delete(schema);
+
+	return ret;
+
+}
+
