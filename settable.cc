@@ -169,10 +169,10 @@ SetTable::get_cursor(string &key, string &val,
 	ib_tuple_delete(search_row); // no need for it anymore, we're positionned.
 
 	if(pos == 0) { // return existing row.
-		row = ib_clust_read_tuple_create(cursor);
+		row = ib_clust_read_tuple_create(cursor_index);
 
 		// read existing row
-		if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+		if((err = ib_cursor_read_row(cursor_index, row)) != DB_SUCCESS) {
 			// failure, close both cursor and bail.
 			err = ib_cursor_close(cursor_index);
 			err = ib_cursor_close(cursor);
