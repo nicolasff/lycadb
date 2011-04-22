@@ -254,3 +254,31 @@ SetTable::smembers(std::string key, std::vector<std::string> &out) {
 	rollback(trx, cursor, search_row);
 	return true;
 }
+
+bool
+SetTable::srem(std::string key, std::string val) {
+
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	// get table cursor
+	if(get_cursor(key, val, trx, cursor, row) == false) {
+		return false;
+	}
+
+	// check if the row was found
+	bool ret = false;
+	if(row) { // found value
+		ret = (ib_cursor_delete_row(cursor) == DB_SUCCESS);
+	}
+
+	// finish up.
+	if(ret) {
+		commit(trx, cursor, row);
+	} else {
+		rollback(trx, cursor, row);
+	}
+
+	return ret;
+}

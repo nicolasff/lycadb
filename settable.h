@@ -12,8 +12,8 @@ public:
 
 	bool sadd(std::string key, std::string val);
 	bool sismember(std::string key, std::string val);
-
 	bool smembers(std::string key, std::vector<std::string> &out);
+	bool srem(std::string key, std::string val);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);

@@ -104,7 +104,13 @@ bool
 Store::sismember(string key, string val) {
 	return m_sets.sismember(key, val);
 }
+
 bool
 Store::smembers(string key, vector<string> &out) {
 	return m_sets.smembers(key, out);
+}
+
+bool
+Store::srem(string key, string val) {
+	return m_sets.srem(key, val);
 }
