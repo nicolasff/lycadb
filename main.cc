@@ -148,6 +148,11 @@ main() {
 
 	cout << "v=[" << v << "]" << endl;
 
+	s.del("hello");
+	s.incr("hello");
+	s.get("hello", v);
+	cout << "v=[" << v << "]" << endl;
+
 	s.shutdown();
 
 	return 0;

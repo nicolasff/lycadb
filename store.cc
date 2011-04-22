@@ -350,3 +350,29 @@ Store::get(string key, string &val) {
 	}
 }
 
+bool
+Store::del(std::string key) {
+
+	ib_trx_t trx = 0;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	// get table cursor
+	if(get_cursor(key, trx, cursor, row) == false) {
+		return false;
+	}
+
+	bool ret = false;
+	if(row) { // found value
+		ret = (ib_cursor_delete_row(cursor) == DB_SUCCESS);
+	}
+
+	// finish up.
+	if(ret) {
+		commit(trx, cursor, row);
+	} else {
+		rollback(trx, cursor, row);
+	}
+
+	return ret;
+}

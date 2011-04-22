@@ -15,6 +15,7 @@ public:
 
 	bool get(std::string key, std::string &val);
 	bool set(std::string key, std::string val);
+	bool del(std::string key);
 
 	bool incr(std::string key, int by = 1);
 	bool decr(std::string key, int by = 1);
