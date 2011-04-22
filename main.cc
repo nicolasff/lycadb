@@ -24,11 +24,11 @@ int
 main() {
 	// quick and unscientific benchmarking.
 
-	Store s("db0", "main");
+	Store s("db0");
 	s.startup();
 	s.install();
-
 	cout << "Benchmarking, please wait." << endl;
+#if 0
 
 	// start with an empty table.
 	s.flushall();
@@ -85,6 +85,7 @@ main() {
 			s.incr(kvi->first);
 		}
 	});
+#endif
 
 	s.shutdown();
 
