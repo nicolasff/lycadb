@@ -49,6 +49,7 @@ main() {
 	// iterator
 	vector<key_value_t>::const_iterator kvi;
 
+#if 1
 	BENCH("SET", n, {
 		// insert all
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
@@ -112,6 +113,7 @@ main() {
 			s.sismember(kvi->first, kvi->second);
 		}
 	});
+#endif
 
 	s.shutdown();
 

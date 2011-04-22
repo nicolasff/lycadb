@@ -2,6 +2,7 @@
 #define STORE_H
 
 #include <string>
+#include <vector>
 #include <haildb.h>
 
 #include "kvtable.h"
@@ -28,6 +29,7 @@ public:
 	// sets
 	bool sadd(std::string key, std::string val);
 	bool sismember(std::string key, std::string val);
+	bool smembers(std::string key, std::vector<std::string> &out);
 
 	// deletion
 	bool del(std::string key);

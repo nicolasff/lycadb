@@ -2,6 +2,7 @@
 #define SETTABLE_H
 
 #include "table.h"
+#include <vector>
 
 class SetTable : public Table {
 
@@ -11,6 +12,8 @@ public:
 
 	bool sadd(std::string key, std::string val);
 	bool sismember(std::string key, std::string val);
+
+	bool smembers(std::string key, std::vector<std::string> &out);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);

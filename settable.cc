@@ -34,10 +34,6 @@ SetTable::create() {
 		return false;
 	}
 
-	if(!create_primary_index(schema)) {
-		return false;
-	}
-
 	if(!create_unique_index(schema)) {
 		return false;
 	}
@@ -54,25 +50,21 @@ SetTable::create_unique_index(ib_tbl_sch_t &schema) {
 	// create primary key index.
 	ib_idx_sch_t unique_index = NULL;
 	if((err = ib_table_schema_add_index(schema, "UNIQUE_KEY", &unique_index)) != DB_SUCCESS) {
-		cout << "sets:0:" << ib_strerror(err) << endl;
 		return false;
 	}
 
 	// add `key` column to index.
 	if((err = ib_index_schema_add_col(unique_index, "key", 0)) != DB_SUCCESS) {
-		cout << "sets:1:" << ib_strerror(err) << endl;
 		return false;
 	}
 
 	// add `val` column to index.
 	if((err = ib_index_schema_add_col(unique_index, "val", 0)) != DB_SUCCESS) {
-		cout << "sets:2:" << ib_strerror(err) << endl;
 		return false;
 	}
 
 	// set unique index.
-	if((err = ib_index_schema_set_unique(unique_index)) != DB_SUCCESS) {
-		cout << "sets:3:" << ib_strerror(err) << endl;
+	if((err = ib_index_schema_set_clustered(unique_index)) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -200,5 +192,65 @@ SetTable::get_cursor(string &key, string &val,
 	// return index cursor, ready for insertion.
 	cursor = cursor_index;
 
+	return true;
+}
+
+bool
+SetTable::smembers(std::string key, std::vector<std::string> &out) {
+
+	ib_err_t err;
+	ib_tpl_t search_row = 0, row = 0;
+
+	// begin transaction
+	ib_trx_t trx = ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+	// open cursor
+	ib_crsr_t cursor = 0;
+	if((err = ib_cursor_open_table(m_name.c_str(), trx, &cursor)) != DB_SUCCESS) {
+		cerr << ib_strerror(err) << endl;
+	}
+
+	// create seach tuple, handling update case.
+	search_row = ib_clust_search_tuple_create(cursor);
+
+	// set key column
+	err = ib_col_set_value(search_row, 0, key.c_str(), key.size());
+
+	// look for existing key
+	int pos = -1;
+	err = ib_cursor_moveto(cursor, search_row, IB_CUR_GE, &pos);
+
+	// error case
+	if(err != DB_SUCCESS && err != DB_END_OF_INDEX) {
+		ib_tuple_delete(search_row);
+		rollback(trx, cursor, search_row);
+		return false;
+	}
+
+	bool must_stop = false;
+	while(err != DB_END_OF_INDEX && !must_stop) {
+
+		// create read tuple
+		row = ib_clust_read_tuple_create(cursor);
+
+		// read existing row
+		if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+			rollback(trx, cursor, row);
+			return false;
+		}
+		string col0((const char*)ib_col_get_value(row, 0), ib_col_get_len(row, 0));
+		if(col0 != key) {	// went too far.
+			must_stop = true;
+		} else {
+			out.push_back(string((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1)));
+		}
+
+		row = ib_tuple_clear(row);
+		err = ib_cursor_next(cursor);
+	}
+
+	if(row) ib_tuple_delete(row);
+
+	rollback(trx, cursor, search_row);
 	return true;
 }
