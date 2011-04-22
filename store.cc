@@ -376,3 +376,9 @@ Store::del(std::string key) {
 
 	return ret;
 }
+
+bool
+Store::flushall() {
+	ib_id_t tid = 0;
+	return (ib_table_truncate(m_table.c_str(), &tid) == DB_SUCCESS);
+}
