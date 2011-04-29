@@ -60,7 +60,6 @@ Store::createDb() {
 	return (ib_database_create(m_db.c_str()) == IB_TRUE);
 }
 
-
 // basic key management
 bool
 Store::get(string key, string &val) {

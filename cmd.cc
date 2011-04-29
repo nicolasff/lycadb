@@ -13,3 +13,9 @@ void
 Command::add(string s) {
 	m_args.push_back(s);
 }
+
+const string
+Command:: verb() const {
+	return m_args[0];
+}
+

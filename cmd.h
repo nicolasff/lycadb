@@ -10,6 +10,8 @@ public:
 	Command(int argc);
 	void add(std::string s); 
 
+	const std::string verb() const;
+
 private:
 	int m_argc;
 	std::vector<std::string> m_args;

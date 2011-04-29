@@ -9,6 +9,7 @@
 #include "store.h"
 #include "protocol.h"
 #include "cmd.h"
+#include "net.h"
 
 using namespace std;
 
@@ -24,28 +25,31 @@ using namespace std;
 
 void
 on_cmd(Command *c) {
-	cout << "ON COMMAND" << endl;
 	delete c;
 }
 void
 on_failure() {
-	cout << "ON FAILURE" << endl;
+	//cout << "ON FAILURE" << endl;
 }
 
 int
 main() {
 	// quick and unscientific benchmarking.
-
-	/*
-	char str[] = "*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n";
 	
+	Server srv("127.0.0.1", 1111);
+	srv.start();
+
+	return 0;
+
 	Parser p;
 	p.setSuccessCb(on_cmd);
 	p.setFailureCb(on_failure);
-	p.consume(str, sizeof(str)-1);
+	char str[] = "*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n";
+	for(int i = 0; i < 600*1000; ++i) {
+		p.consume(str, sizeof(str)-1);
+	}
 
 	return 0;
-	*/
 
 
 	Store s("db0");
