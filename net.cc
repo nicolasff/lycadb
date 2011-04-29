@@ -7,19 +7,18 @@
 
 #include <event.h>
 #include <iostream>
+#include <functional> 
 
 
 using namespace std;
+using namespace std::tr1::placeholders; 
 
 Server::Server(string host, short port) :
 	m_host(host),
 	m_port(port) {
-
-	m_ev = new event;
 }
 
 Server::~Server() {
-	delete m_ev;
 }
 
 void
@@ -28,14 +27,19 @@ on_connect(int fd, short event, void *ptr) {
 	(void)event;
 	Server *s = static_cast<Server*>(ptr);
 	
-	s->on_connect(fd);	// process new client
+	struct sockaddr_in addr;
+	socklen_t addr_sz = sizeof(addr);
+
+	/* accept client */
+	int client_fd = accept(fd, (struct sockaddr*)&addr, &addr_sz);
+	s->on_connect(client_fd);	// process new client
 }
 
 void
 Server::reset_event() {
-	event_set(m_ev, m_fd, EV_READ, ::on_connect, this);
-	event_base_set(m_base, m_ev);
-	event_add(m_ev, NULL);
+	event_set(&m_ev, m_fd, EV_READ, ::on_connect, this);
+	event_base_set(m_base, &m_ev);
+	event_add(&m_ev, NULL);
 }
 
 void
@@ -60,7 +64,11 @@ Server::on_connect(int fd) {
 	reset_event(); // reinstall handler for more clients
 
 	cout << fd << " connected." << endl;
+
+	Client *c = new Client(fd, this->m_base);
+	c->reset_event();
 }
+
 
 /**
  * Sets up a non-blocking socket
@@ -117,4 +125,50 @@ Server::socket() const {
 
 	/* there you go, ready to accept! */
 	return fd;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+Client::Client(int fd, struct event_base *base) :
+	m_fd(fd),
+	m_base(base)
+{
+
+	m_p.setSuccessCb(tr1::bind(&Client::on_cmd, this, _1));
+
+}
+
+void
+Client::on_cmd(Command *cmd) {
+	cout << "COMMAND" << endl;
+}
+
+void
+on_available_data(int fd, short event, void *ptr) {
+
+	(void)event;
+	(void)fd;
+
+	Client *c = static_cast<Client*>(ptr);
+	c->on_data();	// process new data
+}
+
+void
+Client::reset_event() {
+	event_set(&m_ev, m_fd, EV_READ, ::on_available_data, this);
+	event_base_set(m_base, &m_ev);
+	event_add(&m_ev, NULL);
+}
+
+void
+Client::on_data() {
+
+	char buffer[4096];
+	int ret = read(m_fd, buffer, sizeof(buffer));
+
+	if(ret > 0) {
+		reset_event();	// reinstall event
+		m_p.consume(buffer, (size_t)ret);
+	} else {
+		cerr << "ret=" << ret << endl;
+	}
 }
