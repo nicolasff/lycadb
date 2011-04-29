@@ -7,6 +7,8 @@
 #include <pthread.h>
 
 #include "store.h"
+#include "protocol.h"
+#include "cmd.h"
 
 using namespace std;
 
@@ -20,9 +22,31 @@ using namespace std;
 		cout << name << ": " << (mili1-mili0) / 1000 << " sec. (" << (1000 * n / (mili1-mili0)) << "/sec)" << endl;\
 	}
 
+void
+on_cmd(Command *c) {
+	cout << "ON COMMAND" << endl;
+	delete c;
+}
+void
+on_failure() {
+	cout << "ON FAILURE" << endl;
+}
+
 int
 main() {
 	// quick and unscientific benchmarking.
+
+	/*
+	char str[] = "*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n";
+	
+	Parser p;
+	p.setSuccessCb(on_cmd);
+	p.setFailureCb(on_failure);
+	p.consume(str, sizeof(str)-1);
+
+	return 0;
+	*/
+
 
 	Store s("db0");
 	s.startup();

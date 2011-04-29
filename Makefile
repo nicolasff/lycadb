@@ -1,5 +1,5 @@
 OUT=main
-OBJS=main.o store.o table.o kvtable.o settable.o protocol.o
+OBJS=main.o store.o table.o kvtable.o settable.o protocol.o cmd.o
 HAILDB=/opt/haildb
 
 CFLAGS=-O0 -ggdb -I$(HAILDB)/include -Wall -Wextra

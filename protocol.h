@@ -2,6 +2,7 @@
 #define PROTOCOL_H
 
 #include <cstring> // size_t
+#include <tr1/functional>
 
 typedef enum {
 	CONSUME_OK,
@@ -14,13 +15,13 @@ public:
 	NumParser();
 
 	void reset();
-	parsing_err consume(char c);
+	parsing_err consume(const char c);
 
 	operator int() const;
 
 private:
 
-	void consume_digit(char c);
+	void consume_digit(const char c);
 
 	enum {
 		ss_start = 1,
@@ -37,7 +38,9 @@ public:
 	CommandParser();
 
 	void reset();
-	parsing_err consume(char c);
+	parsing_err consume(const char c);
+	void setArgcCb(std::tr1::function<void (int)> f);
+	void setArgvCb(std::tr1::function<void (const char *, size_t)> f);
 
 private:
 
@@ -59,6 +62,32 @@ private:
 
 
 	NumParser m_num;
+
+	// callbacks
+	std::tr1::function<void (int)> on_argc;
+	std::tr1::function<void (const char *, size_t)> on_argv;
+};
+
+class Command;
+
+class Parser {
+public:
+	Parser();
+	~Parser();
+
+	void setSuccessCb(std::tr1::function<void (Command*)> f);
+	void setFailureCb(std::tr1::function<void (void)> f);
+	void consume(const char *s, size_t sz);
+
+private:
+	CommandParser m_cp;
+	Command *m_cmd;
+
+	std::tr1::function<void (Command*)> on_success;
+	std::tr1::function<void (void)> on_failure;
+
+	void on_argc(int);
+	void on_argv(const char *, size_t);
 };
 
 #endif
