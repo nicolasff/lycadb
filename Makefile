@@ -1,9 +1,8 @@
 OUT=main
 OBJS=main.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o
-HAILDB=/opt/haildb
 
-CFLAGS=-O0 -ggdb -I$(HAILDB)/include -Wall -Wextra
-LDFLAGS=-levent -pthread -L$(HAILDB)/lib -lhaildb
+CFLAGS=-O0 -ggdb -Wall -Wextra
+LDFLAGS=-levent -pthread -lhaildb
 
 all: $(OUT) Makefile
 
