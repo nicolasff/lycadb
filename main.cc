@@ -35,12 +35,8 @@ on_failure() {
 int
 main() {
 	// quick and unscientific benchmarking.
-	
-	Server srv("127.0.0.1", 1111);
-	srv.start();
 
-	return 0;
-
+	/*
 	Parser p;
 	p.setSuccessCb(on_cmd);
 	p.setFailureCb(on_failure);
@@ -50,11 +46,17 @@ main() {
 	}
 
 	return 0;
+	*/
 
 
 	Store s("db0");
 	s.startup();
 	s.install();
+	Server srv("127.0.0.1", 1111, s);
+	srv.start();
+
+	return 0;
+
 	cout << "Benchmarking, please wait." << endl;
 
 	// start with an empty table.

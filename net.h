@@ -6,9 +6,11 @@
 
 #include "protocol.h"
 
+class Dispatcher;
+
 class Client {
 public:
-	Client(int fd, struct event_base *base);
+	Client(int fd, struct event_base *base, Dispatcher &d);
 	void reset_event();
 
 private:
@@ -20,12 +22,16 @@ private:
 	event_base *m_base;
 	Parser m_p;
 
+	Dispatcher &m_dispatcher;
+
 	friend void on_available_data(int, short, void *);
 };
 
+class Store;
+
 class Server {
 public:
-	Server(std::string host, short port);
+	Server(std::string host, short port, Store &store);
 	~Server();
 	void start();
 
@@ -43,6 +49,9 @@ private:
 	int m_fd;
 	event_base *m_base;
 	event m_ev;
+
+	// link to store.
+	Dispatcher *m_dispatcher;
 
 	friend void on_connect(int, short, void *);
 };

@@ -1,4 +1,7 @@
 #include "net.h"
+#include "cmd.h"
+#include "result.h"
+#include "dispatcher.h"
 
 #include <csignal>
 #include <cstring>
@@ -13,9 +16,11 @@
 using namespace std;
 using namespace std::tr1::placeholders; 
 
-Server::Server(string host, short port) :
+Server::Server(string host, short port, Store &store) :
 	m_host(host),
 	m_port(port) {
+
+	m_dispatcher = new Dispatcher(store);
 }
 
 Server::~Server() {
@@ -65,7 +70,7 @@ Server::on_connect(int fd) {
 
 	cout << fd << " connected." << endl;
 
-	Client *c = new Client(fd, this->m_base);
+	Client *c = new Client(fd, this->m_base, *m_dispatcher);
 	c->reset_event();
 }
 
@@ -128,18 +133,24 @@ Server::socket() const {
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-Client::Client(int fd, struct event_base *base) :
+Client::Client(int fd, struct event_base *base, Dispatcher &d) :
 	m_fd(fd),
-	m_base(base)
+	m_base(base),
+	m_dispatcher(d)
 {
-
+	// setup parser success callback
 	m_p.setSuccessCb(tr1::bind(&Client::on_cmd, this, _1));
 
 }
 
 void
 Client::on_cmd(Command *cmd) {
-	cout << "COMMAND" << endl;
+
+	Result *r = m_dispatcher.run(*cmd);
+	r->write(m_fd);
+
+	delete r;
+	delete cmd;
 }
 
 void
