@@ -28,6 +28,15 @@ private:
 	// implementations
 	Reply* get(Command &cmd);
 	Reply* set(Command &cmd);
+	Reply* del(Command &cmd);
+
+	//Reply* incr(Command &cmd);
+	//Reply* decr(Command &cmd);
+
+	Reply* sadd(Command &cmd);
+	Reply* smembers(Command &cmd);
+	Reply* sismember(Command &cmd);
+	Reply* srem(Command &cmd);
 
 };
 

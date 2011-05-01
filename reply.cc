@@ -77,6 +77,7 @@ ErrorReply::write(int fd) const {
 
 	return (ret == (int)out.size());
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 SuccessReply::SuccessReply() {
@@ -90,5 +91,36 @@ SuccessReply::write(int fd) const {
 	int ret = ::write(fd, out, sizeof(out)-1);
 
 	return (ret == (int)sizeof(out)-1);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+ListReply::ListReply() {
+}
+
+void
+ListReply::add(Reply *r) {
+	m_elements.push_back(r);
+}
+
+bool
+ListReply::write(int fd) const {
+
+	// write number of elements
+	stringstream ss;
+	ss << '*' << m_elements.size() << "\r\n";
+
+	// send to fd
+	string out = ss.str();
+	int ret = ::write(fd, out.c_str(), out.size());
+
+	// write all the elements one by one.
+	vector<Reply*>::const_iterator ri;
+	for(ri = m_elements.begin(); ri != m_elements.end(); ri++) {
+		(*ri)->write(fd);
+	}
+
+	return (ret == (int)out.size());
 
 }

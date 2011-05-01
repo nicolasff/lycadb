@@ -45,8 +45,8 @@ str::operator!=(const str &s) const {
 bool
 str::operator<(const str &s) const {
 
-	if(size() < s.size()) return false;
-	return (s.size() == size() && ::memcmp(c_str(), s.c_str(), size()) < 0);
+	size_t min_sz = m_sz < s.size() ? m_sz : s.size();
+	return (::memcmp(c_str(), s.c_str(), min_sz) < 0);
 }
 
 bool

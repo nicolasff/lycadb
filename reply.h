@@ -2,6 +2,8 @@
 #define Reply_H
 
 #include <string>
+#include <vector>
+
 #include "str.h"
 
 class Reply {
@@ -62,6 +64,19 @@ class SuccessReply : public Reply {
 public:
 	SuccessReply();
 	virtual bool write(int) const;
+};
+
+////////////////////////////////////////////////////////////
+
+class ListReply: public Reply {
+public:
+	ListReply();
+	void add(Reply *r);
+	virtual bool write(int) const;
+
+private:
+	std::vector<Reply*> m_elements;
+
 };
 
 #endif
