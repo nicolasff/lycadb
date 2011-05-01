@@ -108,7 +108,7 @@ KVTable::get(str key, str *val) {
 }
 
 bool
-KVTable::incr(str key, int by) {
+KVTable::incr(str key, int by, int &out) {
 
 	bool ret = false;
 	ib_trx_t trx = 0;
@@ -136,13 +136,17 @@ KVTable::incr(str key, int by) {
 			ss.str("");
 		}
 
+		// save into output parameter.
+		out = (i + by);
+
 		// convert back to string and update row.
-		ss << (i + by);
+		ss << out;
 		string tmp = ss.str();
 		ret = update_row(cursor, row, str(tmp.c_str(), tmp.size(), 1));
 
 	} else { // insert with value = "1".
 		ret = insert_row(cursor, key, "1");
+		out = 1;
 	}
 
 	// finish up.
@@ -155,6 +159,6 @@ KVTable::incr(str key, int by) {
 }
 
 bool
-KVTable::decr(str key, int by) {
-	return incr(key, -by);
+KVTable::decr(str key, int by, int &out) {
+	return incr(key, -by, out);
 }

@@ -73,13 +73,13 @@ Store::set(str key, str val) {
 
 // increment
 bool
-Store::incr(str key, int by){
-	return m_main.incr(key, by);
+Store::incr(str key, int by, int &out){
+	return m_main.incr(key, by, out);
 }
 
 bool
-Store::decr(str key, int by) {
-	return m_main.decr(key, by);
+Store::decr(str key, int by, int &out) {
+	return m_main.decr(key, by, out);
 }
 
 bool

@@ -16,8 +16,8 @@ public:
 	bool set(str key, str val);
 
 	// increment
-	bool incr(str key, int by = 1);
-	bool decr(str key, int by = 1);
+	bool incr(str key, int by, int &out);
+	bool decr(str key, int by, int &out);
 };
 
 #endif

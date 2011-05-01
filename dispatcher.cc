@@ -4,6 +4,7 @@
 #include "cmd.h"
 
 #include <string>
+#include <cstdlib>
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -14,10 +15,8 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["SET"] = tr1::bind(&Dispatcher::set, this, _1);
 	m_functions["DEL"] = tr1::bind(&Dispatcher::del, this, _1);
 
-	/*
 	m_functions["INCR"] = tr1::bind(&Dispatcher::incr, this, _1);
 	m_functions["DECR"] = tr1::bind(&Dispatcher::decr, this, _1);
-	*/
 
 	m_functions["SADD"] = tr1::bind(&Dispatcher::sadd, this, _1);
 	m_functions["SMEMBERS"] = tr1::bind(&Dispatcher::smembers, this, _1);
@@ -81,6 +80,36 @@ Dispatcher::del(Command &cmd) {
 		return new IntReply(1);
 	} else {
 		return new IntReply(0);
+	}
+}
+
+Reply*
+Dispatcher::incr(Command &cmd) {
+	if(cmd.argc() != 1 && cmd.argc() != 2) {
+		return new ErrorReply("wrong number of arguments");
+	}
+
+	int out;
+	int by = cmd.argc() == 1 ? 1 : ::atol(cmd.argv(2).c_str());
+	if(m_store.incr(cmd.argv(1), by, out)) {
+		return new IntReply(out);
+	} else {
+		return new ErrorReply("unknown error");
+	}
+}
+
+Reply*
+Dispatcher::decr(Command &cmd) {
+	if(cmd.argc() != 1 && cmd.argc() != 2) {
+		return new ErrorReply("wrong number of arguments");
+	}
+
+	int out;
+	int by = cmd.argc() == 1 ? 1 : ::atol(cmd.argv(2).c_str());
+	if(m_store.decr(cmd.argv(1), by, out)) {
+		return new IntReply(out);
+	} else {
+		return new ErrorReply("unknown error");
 	}
 }
 
