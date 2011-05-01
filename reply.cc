@@ -33,8 +33,9 @@ StringReply::write(int fd) const {
 
 	// format output
 	stringstream ss;
-	ss << '$' << m_str.size() << "\r\n"
-		<< m_str.c_str() << "\r\n";
+	ss << '$' << m_str.size() << "\r\n";
+	ss.write(m_str.c_str(), m_str.size());
+	ss << "\r\n";
 
 	// send to fd
 	string out = ss.str();

@@ -242,7 +242,7 @@ SetTable::smembers(str key, std::vector<str> &out) {
 		if(col0 != key) {	// went too far.
 			must_stop = true;
 		} else {
-			out.push_back(str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1)));
+			out.push_back(str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1));
 		}
 
 		row = ib_tuple_clear(row);

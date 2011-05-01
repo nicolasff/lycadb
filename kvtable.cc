@@ -97,7 +97,7 @@ KVTable::get(str key, str *val) {
 	if(row) { // found value
 
 		// copy to output parameter
-		*val = str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
+		*val = str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
 
 		commit(trx, cursor, row);
 		return true;
@@ -139,7 +139,7 @@ KVTable::incr(str key, int by) {
 		// convert back to string and update row.
 		ss << (i + by);
 		string tmp = ss.str();
-		ret = update_row(cursor, row, str(tmp.c_str(), tmp.size()));
+		ret = update_row(cursor, row, str(tmp.c_str(), tmp.size(), 1));
 
 	} else { // insert with value = "1".
 		ret = insert_row(cursor, key, "1");

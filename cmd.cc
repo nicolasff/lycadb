@@ -9,6 +9,12 @@ Command::Command(int argc) :
 
 }
 
+Command::~Command() {
+	for(unsigned int i = 0; i < m_args.size(); ++i) {
+		m_args[i].reset();
+	}
+}
+
 void
 Command::add(str s) {
 	m_args.push_back(s);

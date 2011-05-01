@@ -9,9 +9,14 @@ str::str(const char *s) : m_s(s) {
 	m_sz = strlen(s);
 }
 
-str::str(const char *s, size_t sz) :
+str::str(const char *s, size_t sz, int dup) :
 	m_s(s),
 	m_sz(sz) {
+
+	if(dup) {
+		m_s = new char[sz];
+		memcpy((char*)m_s, (const char*)s, sz);
+	}
 
 }
 const char *
@@ -22,6 +27,12 @@ str::c_str() const {
 size_t
 str::size() const {
 	return m_sz;
+}
+
+void
+str::reset() {
+	delete[] m_s;
+	m_sz = 0;
 }
 
 bool

@@ -92,8 +92,10 @@ void
 CommandParser::reset() {
 	state = ss_start;
 
-	for(int i = 0; i < m_argc; ++i) {
-		delete[](m_argv[i]);
+	if(!on_argv) {
+		for(int i = 0; i < m_argc; ++i) {
+			delete[](m_argv[i]);
+		}
 	}
 	delete[](m_argv);
 	delete[](m_argvlen);

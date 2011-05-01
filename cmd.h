@@ -8,6 +8,8 @@ class Command {
 
 public:
 	Command(int argc);
+	~Command();
+
 	void add(str s); 
 
 	const str verb() const;
