@@ -26,15 +26,29 @@ Dispatcher::run(Command &cmd) {
 Result*
 Dispatcher::get(Command &cmd) {
 
-	string s("get-response");
-	StringResult *sr = new StringResult(s);
-	return sr;
+	if(cmd.argc() != 1) {
+		return new ErrorResult("wrong number of arguments");
+	}
+
+	string key = cmd.argv(1), val;
+	if(m_store.get(key, val)) {
+		return new StringResult(val);
+	} else {
+		return new EmptyResult();
+	}
 }
 
 Result*
 Dispatcher::set(Command &cmd) {
 
-	string s("set-response");
-	StringResult *sr = new StringResult(s);
-	return sr;
+	if(cmd.argc() != 2) {
+		return new ErrorResult("wrong number of arguments");
+	}
+
+	string key = cmd.argv(1), val = cmd.argv(2);
+	if(m_store.set(key, val)) {
+		return new SuccessResult();
+	} else {
+		return new ErrorResult("unknown error");
+	}
 }

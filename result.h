@@ -34,4 +34,33 @@ private:
 
 ////////////////////////////////////////////////////////////
 
+class EmptyResult : public Result {
+
+public:
+	EmptyResult();
+	virtual bool write(int) const;
+
+};
+
+////////////////////////////////////////////////////////////
+
+class ErrorResult : public Result {
+
+public:
+	ErrorResult(std::string s);
+	virtual bool write(int) const;
+
+private:
+	std::string m_str;
+};
+
+////////////////////////////////////////////////////////////
+
+class SuccessResult : public Result {
+
+public:
+	SuccessResult();
+	virtual bool write(int) const;
+};
+
 #endif

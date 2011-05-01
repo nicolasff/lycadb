@@ -68,8 +68,6 @@ Server::on_connect(int fd) {
 	
 	reset_event(); // reinstall handler for more clients
 
-	cout << fd << " connected." << endl;
-
 	Client *c = new Client(fd, this->m_base, *m_dispatcher);
 	c->reset_event();
 }
@@ -180,6 +178,6 @@ Client::on_data() {
 		reset_event();	// reinstall event
 		m_p.consume(buffer, (size_t)ret);
 	} else {
-		cerr << "ret=" << ret << endl;
+		delete this;	// ew.
 	}
 }

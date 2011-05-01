@@ -19,3 +19,12 @@ Command:: verb() const {
 	return m_args[0];
 }
 
+size_t
+Command::argc() const {
+	return m_args.size()-1;
+}
+
+string
+Command::argv(int pos) const {
+	return m_args[pos];
+}
