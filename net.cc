@@ -1,6 +1,6 @@
 #include "net.h"
 #include "cmd.h"
-#include "result.h"
+#include "reply.h"
 #include "dispatcher.h"
 
 #include <csignal>
@@ -144,7 +144,7 @@ Client::Client(int fd, struct event_base *base, Dispatcher &d) :
 void
 Client::on_cmd(Command *cmd) {
 
-	Result *r = m_dispatcher.run(*cmd);
+	Reply *r = m_dispatcher.run(*cmd);
 	r->write(m_fd);
 
 	delete r;

@@ -1,6 +1,6 @@
 #include "dispatcher.h"
 #include "store.h"
-#include "result.h"
+#include "reply.h"
 #include "cmd.h"
 
 #include <string>
@@ -15,7 +15,7 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 }
 
 
-Result*
+Reply*
 Dispatcher::run(Command &cmd) {
 
 	string verb = cmd.verb();
@@ -23,32 +23,32 @@ Dispatcher::run(Command &cmd) {
 	return m_functions[verb](cmd);
 }
 
-Result*
+Reply*
 Dispatcher::get(Command &cmd) {
 
 	if(cmd.argc() != 1) {
-		return new ErrorResult("wrong number of arguments");
+		return new ErrorReply("wrong number of arguments");
 	}
 
 	string key = cmd.argv(1), val;
 	if(m_store.get(key, val)) {
-		return new StringResult(val);
+		return new StringReply(val);
 	} else {
-		return new EmptyResult();
+		return new EmptyReply();
 	}
 }
 
-Result*
+Reply*
 Dispatcher::set(Command &cmd) {
 
 	if(cmd.argc() != 2) {
-		return new ErrorResult("wrong number of arguments");
+		return new ErrorReply("wrong number of arguments");
 	}
 
 	string key = cmd.argv(1), val = cmd.argv(2);
 	if(m_store.set(key, val)) {
-		return new SuccessResult();
+		return new SuccessReply();
 	} else {
-		return new ErrorResult("unknown error");
+		return new ErrorReply("unknown error");
 	}
 }

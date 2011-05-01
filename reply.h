@@ -1,19 +1,19 @@
-#ifndef RESULT_H
-#define RESULT_H
+#ifndef Reply_H
+#define Reply_H
 
 #include <string>
 
-class Result {
+class Reply {
 public:
 	virtual bool write(int) const = 0;
 };
 
 ////////////////////////////////////////////////////////////
 
-class IntResult : public Result {
+class IntReply : public Reply {
 
 public:
-	IntResult(int val);
+	IntReply(int val);
 	virtual bool write(int) const;
 
 private:
@@ -22,10 +22,10 @@ private:
 
 ////////////////////////////////////////////////////////////
 
-class StringResult : public Result {
+class StringReply : public Reply {
 
 public:
-	StringResult(std::string &s);
+	StringReply(std::string &s);
 	virtual bool write(int) const;
 
 private:
@@ -34,20 +34,20 @@ private:
 
 ////////////////////////////////////////////////////////////
 
-class EmptyResult : public Result {
+class EmptyReply : public Reply {
 
 public:
-	EmptyResult();
+	EmptyReply();
 	virtual bool write(int) const;
 
 };
 
 ////////////////////////////////////////////////////////////
 
-class ErrorResult : public Result {
+class ErrorReply : public Reply {
 
 public:
-	ErrorResult(std::string s);
+	ErrorReply(std::string s);
 	virtual bool write(int) const;
 
 private:
@@ -56,10 +56,10 @@ private:
 
 ////////////////////////////////////////////////////////////
 
-class SuccessResult : public Result {
+class SuccessReply : public Reply {
 
 public:
-	SuccessResult();
+	SuccessReply();
 	virtual bool write(int) const;
 };
 

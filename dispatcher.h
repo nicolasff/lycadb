@@ -6,17 +6,17 @@
 
 class Store;
 class Command;
-class Result;
+class Reply;
 
 
 class Dispatcher {
 
 public:
 	Dispatcher(Store &s);
-	Result* run(Command &cmd);
+	Reply* run(Command &cmd);
 
 
-	typedef std::tr1::function<Result* (Command&)> Handler;
+	typedef std::tr1::function<Reply* (Command&)> Handler;
 
 private:
 	Store &m_store;
@@ -24,8 +24,8 @@ private:
 	std::map<std::string, Handler> m_functions;
 
 	// implementations
-	Result* get(Command &cmd);
-	Result* set(Command &cmd);
+	Reply* get(Command &cmd);
+	Reply* set(Command &cmd);
 
 };
 

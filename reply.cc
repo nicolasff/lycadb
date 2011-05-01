@@ -1,4 +1,4 @@
-#include "result.h"
+#include "reply.h"
 #include <sstream>
 #include <iostream>
 
@@ -6,11 +6,11 @@ using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-IntResult::IntResult(int val) : m_val(val) {
+IntReply::IntReply(int val) : m_val(val) {
 }
 
 bool
-IntResult::write(int fd) const {
+IntReply::write(int fd) const {
 
 	// format output
 	stringstream ss;
@@ -25,11 +25,11 @@ IntResult::write(int fd) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-StringResult::StringResult(string &s) : m_str(s) {
+StringReply::StringReply(string &s) : m_str(s) {
 }
 
 bool
-StringResult::write(int fd) const {
+StringReply::write(int fd) const {
 
 	// format output
 	stringstream ss;
@@ -45,11 +45,11 @@ StringResult::write(int fd) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-EmptyResult::EmptyResult() {
+EmptyReply::EmptyReply() {
 }
 
 bool
-EmptyResult::write(int fd) const {
+EmptyReply::write(int fd) const {
 
 	// send to fd
 	char out[] = "$-1\r\n";
@@ -60,11 +60,11 @@ EmptyResult::write(int fd) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ErrorResult::ErrorResult(string s) : m_str(s) {
+ErrorReply::ErrorReply(string s) : m_str(s) {
 }
 
 bool
-ErrorResult::write(int fd) const {
+ErrorReply::write(int fd) const {
 
 	// format output
 	stringstream ss;
@@ -78,11 +78,11 @@ ErrorResult::write(int fd) const {
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-SuccessResult::SuccessResult() {
+SuccessReply::SuccessReply() {
 }
 
 bool
-SuccessResult::write(int fd) const {
+SuccessReply::write(int fd) const {
 
 	// send to fd
 	char out[] = "+OK\r\n";
