@@ -1,23 +1,23 @@
 #ifndef CMD_H
 #define CMD_H
 
-#include <string>
+#include "str.h"
 #include <vector>
 
 class Command {
 
 public:
 	Command(int argc);
-	void add(std::string s); 
+	void add(str s); 
 
-	const std::string verb() const;
+	const str verb() const;
 
 	size_t argc() const;
-	std::string argv(int pos) const;
+	str argv(int pos) const;
 
 private:
 	int m_argc;
-	std::vector<std::string> m_args;
+	std::vector<str> m_args;
 
 };
 

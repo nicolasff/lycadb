@@ -79,7 +79,7 @@ main() {
 	// iterator
 	vector<key_value_t>::const_iterator kvi;
 
-#if 1
+#if 0
 	BENCH("SET", n, {
 		// insert all
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
@@ -91,7 +91,7 @@ main() {
 	BENCH("GET", n, {
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
 			string val;
-			s.get(kvi->first, val);
+			//s.get(kvi->first, val);
 		}
 	});
 

@@ -10,16 +10,16 @@ public:
 	SetTable(std::string name);
 	bool create();
 
-	bool sadd(std::string key, std::string val);
-	bool sismember(std::string key, std::string val);
-	bool smembers(std::string key, std::vector<std::string> &out);
-	bool srem(std::string key, std::string val);
+	bool sadd(str key, str val);
+	bool sismember(str key, str val);
+	bool smembers(str key, std::vector<str> &out);
+	bool srem(str key, str val);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 
 	bool
-	get_cursor(std::string &key, std::string &val,
+	get_cursor(str &key, str &val,
 			ib_trx_t &trx, ib_crsr_t &cursor,
 			ib_tpl_t &row);
 

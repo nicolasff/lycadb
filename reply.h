@@ -2,6 +2,7 @@
 #define Reply_H
 
 #include <string>
+#include "str.h"
 
 class Reply {
 public:
@@ -25,11 +26,11 @@ private:
 class StringReply : public Reply {
 
 public:
-	StringReply(std::string &s);
+	StringReply(str s);
 	virtual bool write(int) const;
 
 private:
-	std::string m_str;
+	str m_str;
 };
 
 ////////////////////////////////////////////////////////////

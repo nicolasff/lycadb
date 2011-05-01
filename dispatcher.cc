@@ -18,9 +18,13 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 Reply*
 Dispatcher::run(Command &cmd) {
 
-	string verb = cmd.verb();
-
-	return m_functions[verb](cmd);
+	str verb = cmd.verb();
+	map<str, Handler>::iterator fun = m_functions.find(cmd.verb());
+	if(fun == m_functions.end()) {
+		return new ErrorReply("Unknown command");
+	} else {
+		return fun->second(cmd);
+	}
 }
 
 Reply*
@@ -30,13 +34,14 @@ Dispatcher::get(Command &cmd) {
 		return new ErrorReply("wrong number of arguments");
 	}
 
-	string key = cmd.argv(1), val;
-	if(m_store.get(key, val)) {
+	str key(cmd.argv(1)), val;
+	if(m_store.get(key, &val)) {
 		return new StringReply(val);
 	} else {
 		return new EmptyReply();
 	}
 }
+
 
 Reply*
 Dispatcher::set(Command &cmd) {
@@ -45,10 +50,10 @@ Dispatcher::set(Command &cmd) {
 		return new ErrorReply("wrong number of arguments");
 	}
 
-	string key = cmd.argv(1), val = cmd.argv(2);
-	if(m_store.set(key, val)) {
+	if(m_store.set(cmd.argv(1), cmd.argv(2))) {
 		return new SuccessReply();
 	} else {
 		return new ErrorReply("unknown error");
 	}
 }
+

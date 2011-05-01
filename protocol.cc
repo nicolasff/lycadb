@@ -261,6 +261,6 @@ Parser::on_argc(int n) {
 
 void
 Parser::on_argv(const char *s, size_t sz) {
-	m_cmd->add(string(s, sz));
+	m_cmd->add(str(s, sz));
 }
 

@@ -43,7 +43,7 @@ KVTable::create() {
 }
 
 bool
-KVTable::set(string key, string val) {
+KVTable::set(str key, str val) {
 
 	bool ret = false;
 
@@ -58,7 +58,7 @@ KVTable::set(string key, string val) {
 
 	if(row) { // existing value
 
-		string old((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
+		str old((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 
 		if(old == val) {	// no need to update
 			rollback(trx, cursor, row);
@@ -83,7 +83,7 @@ KVTable::set(string key, string val) {
 }
 
 bool
-KVTable::get(string key, string &val) {
+KVTable::get(str key, str *val) {
 
 	ib_trx_t trx = 0;
 	ib_crsr_t cursor = 0;
@@ -97,7 +97,7 @@ KVTable::get(string key, string &val) {
 	if(row) { // found value
 
 		// copy to output parameter
-		val = string((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
+		*val = str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 
 		commit(trx, cursor, row);
 		return true;
@@ -108,7 +108,7 @@ KVTable::get(string key, string &val) {
 }
 
 bool
-KVTable::incr(string key, int by) {
+KVTable::incr(str key, int by) {
 
 	bool ret = false;
 	ib_trx_t trx = 0;
@@ -138,7 +138,8 @@ KVTable::incr(string key, int by) {
 
 		// convert back to string and update row.
 		ss << (i + by);
-		ret = update_row(cursor, row, ss.str());
+		string tmp = ss.str();
+		ret = update_row(cursor, row, str(tmp.c_str(), tmp.size()));
 
 	} else { // insert with value = "1".
 		ret = insert_row(cursor, key, "1");
@@ -154,6 +155,6 @@ KVTable::incr(string key, int by) {
 }
 
 bool
-KVTable::decr(string key, int by) {
+KVTable::decr(str key, int by) {
 	return incr(key, -by);
 }

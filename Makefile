@@ -1,5 +1,5 @@
 OUT=main
-OBJS=main.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o
+OBJS=main.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o str.o
 
 CFLAGS=-O0 -ggdb -Wall -Wextra
 LDFLAGS=-levent -pthread -lhaildb

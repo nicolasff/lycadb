@@ -10,11 +10,11 @@ Command::Command(int argc) :
 }
 
 void
-Command::add(string s) {
+Command::add(str s) {
 	m_args.push_back(s);
 }
 
-const string
+const str
 Command:: verb() const {
 	return m_args[0];
 }
@@ -24,7 +24,7 @@ Command::argc() const {
 	return m_args.size()-1;
 }
 
-string
+str
 Command::argv(int pos) const {
 	return m_args[pos];
 }

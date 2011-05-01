@@ -2,6 +2,7 @@
 #define KVTABLE_H
 
 #include "table.h"
+#include "str.h"
 
 class KVTable : public Table {
 
@@ -11,12 +12,12 @@ public:
 	bool create();
 
 	// basic key management
-	bool get(std::string key, std::string &val);
-	bool set(std::string key, std::string val);
+	bool get(str key, str *val);
+	bool set(str key, str val);
 
 	// increment
-	bool incr(std::string key, int by = 1);
-	bool decr(std::string key, int by = 1);
+	bool incr(str key, int by = 1);
+	bool decr(str key, int by = 1);
 };
 
 #endif

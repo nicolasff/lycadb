@@ -4,6 +4,8 @@
 #include <string>
 #include <haildb.h>
 
+#include "str.h"
+
 class Table {
 
 public:
@@ -12,18 +14,18 @@ public:
 	virtual bool create() = 0;
 
 	// deletion
-	virtual bool del(std::string key);
+	virtual bool del(str key);
 	bool flushall();
 
 protected:
 
 	bool
-	get_cursor(std::string &key, ib_trx_t &trx,
+	get_cursor(str key, ib_trx_t &trx,
 			ib_crsr_t &cursor, ib_tpl_t &row);
 
-	bool update_row(ib_crsr_t cursor, ib_tpl_t row, std::string val);
+	bool update_row(ib_crsr_t cursor, ib_tpl_t row, str val);
 
-	bool insert_row(ib_crsr_t cursor, std::string key, std::string val);
+	bool insert_row(ib_crsr_t cursor, str key, str val);
 
 	void commit(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row);
 

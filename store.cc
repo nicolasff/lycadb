@@ -62,29 +62,50 @@ Store::createDb() {
 
 // basic key management
 bool
-Store::get(string key, string &val) {
+Store::get(str key, str *val) {
 	return m_main.get(key, val);
 }
 
 bool
-Store::set(string key, string val) {
+Store::set(str key, str val) {
 	return m_main.set(key, val);
 }
 
 // increment
 bool
-Store::incr(string key, int by){
+Store::incr(str key, int by){
 	return m_main.incr(key, by);
 }
 
 bool
-Store::decr(string key, int by) {
+Store::decr(str key, int by) {
 	return m_main.decr(key, by);
 }
 
 bool
-Store::del(string key) {
+Store::del(str key) {
 	return m_main.del(key);
+}
+
+
+bool
+Store::sadd(str key, str val) {
+	return m_sets.sadd(key, val);
+}
+
+bool
+Store::sismember(str key, str val) {
+	return m_sets.sismember(key, val);
+}
+
+bool
+Store::smembers(str key, vector<str> &out) {
+	return m_sets.smembers(key, out);
+}
+
+bool
+Store::srem(str key, str val) {
+	return m_sets.srem(key, val);
 }
 
 bool
@@ -92,24 +113,4 @@ Store::flushall() {
 	m_main.flushall();
 	m_sets.flushall();
 	return true;
-}
-
-bool
-Store::sadd(string key, string val) {
-	return m_sets.sadd(key, val);
-}
-
-bool
-Store::sismember(string key, string val) {
-	return m_sets.sismember(key, val);
-}
-
-bool
-Store::smembers(string key, vector<string> &out) {
-	return m_sets.smembers(key, out);
-}
-
-bool
-Store::srem(string key, string val) {
-	return m_sets.srem(key, val);
 }

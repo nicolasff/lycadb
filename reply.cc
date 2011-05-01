@@ -25,7 +25,7 @@ IntReply::write(int fd) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-StringReply::StringReply(string &s) : m_str(s) {
+StringReply::StringReply(str s) : m_str(s) {
 }
 
 bool
@@ -34,7 +34,7 @@ StringReply::write(int fd) const {
 	// format output
 	stringstream ss;
 	ss << '$' << m_str.size() << "\r\n"
-		<< m_str << "\r\n";
+		<< m_str.c_str() << "\r\n";
 
 	// send to fd
 	string out = ss.str();

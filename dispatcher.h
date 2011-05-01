@@ -1,6 +1,8 @@
 #ifndef DISPATCHER_H
 #define DISPATCHER_H
 
+#include "str.h"
+
 #include <tr1/functional>
 #include <map>
 
@@ -21,7 +23,7 @@ public:
 private:
 	Store &m_store;
 
-	std::map<std::string, Handler> m_functions;
+	std::map<str, Handler> m_functions;
 
 	// implementations
 	Reply* get(Command &cmd);

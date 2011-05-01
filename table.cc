@@ -15,7 +15,7 @@ Table::Table(string name)
 }
 
 bool
-Table::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
+Table::update_row(ib_crsr_t cursor, ib_tpl_t row, str val) {
 
 	ib_err_t err;
 
@@ -43,7 +43,7 @@ Table::update_row(ib_crsr_t cursor, ib_tpl_t row, string val) {
 }
 
 bool
-Table::insert_row(ib_crsr_t cursor, string key, string val) {
+Table::insert_row(ib_crsr_t cursor, str key, str val) {
 
 	ib_err_t err;
 
@@ -107,7 +107,7 @@ Table::rollback(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
 }
 
 bool
-Table::get_cursor(string &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
+Table::get_cursor(str key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
 
 	ib_err_t err;
 	ib_tpl_t search_row;
@@ -156,7 +156,7 @@ Table::get_cursor(string &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) 
 }
 
 bool
-Table::del(std::string key) {
+Table::del(str key) {
 
 	ib_trx_t trx = 0;
 	ib_crsr_t cursor = 0;

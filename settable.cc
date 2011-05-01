@@ -72,7 +72,7 @@ SetTable::create_unique_index(ib_tbl_sch_t &schema) {
 }
 
 bool
-SetTable::sadd(string key, string val) {
+SetTable::sadd(str key, str val) {
 
 	bool ret = false;
 
@@ -103,7 +103,7 @@ SetTable::sadd(string key, string val) {
 
 
 bool
-SetTable::sismember(string key, string val) {
+SetTable::sismember(str key, str val) {
 
 	bool ret = false;
 
@@ -126,7 +126,7 @@ SetTable::sismember(string key, string val) {
 }
 
 bool
-SetTable::get_cursor(string &key, string &val,
+SetTable::get_cursor(str &key, str &val,
 		ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
 
 	ib_err_t err;
@@ -196,7 +196,7 @@ SetTable::get_cursor(string &key, string &val,
 }
 
 bool
-SetTable::smembers(std::string key, std::vector<std::string> &out) {
+SetTable::smembers(str key, std::vector<str> &out) {
 
 	ib_err_t err;
 	ib_tpl_t search_row = 0, row = 0;
@@ -238,11 +238,11 @@ SetTable::smembers(std::string key, std::vector<std::string> &out) {
 			rollback(trx, cursor, row);
 			return false;
 		}
-		string col0((const char*)ib_col_get_value(row, 0), ib_col_get_len(row, 0));
+		str col0((const char*)ib_col_get_value(row, 0), ib_col_get_len(row, 0));
 		if(col0 != key) {	// went too far.
 			must_stop = true;
 		} else {
-			out.push_back(string((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1)));
+			out.push_back(str((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1)));
 		}
 
 		row = ib_tuple_clear(row);
@@ -256,7 +256,7 @@ SetTable::smembers(std::string key, std::vector<std::string> &out) {
 }
 
 bool
-SetTable::srem(std::string key, std::string val) {
+SetTable::srem(str key, str val) {
 
 	ib_trx_t trx = 0;
 	ib_crsr_t cursor = 0;

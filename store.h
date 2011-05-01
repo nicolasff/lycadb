@@ -5,6 +5,8 @@
 #include <vector>
 #include <haildb.h>
 
+#include "str.h"
+
 #include "kvtable.h"
 #include "settable.h"
 
@@ -19,21 +21,21 @@ public:
 	bool install();
 
 	// basic key management
-	bool get(std::string key, std::string &val);
-	bool set(std::string key, std::string val);
+	bool get(str key, str *val);
+	bool set(str key, str val);
 
 	// increment
-	bool incr(std::string key, int by = 1);
-	bool decr(std::string key, int by = 1);
+	bool incr(str key, int by = 1);
+	bool decr(str key, int by = 1);
 
 	// sets
-	bool sadd(std::string key, std::string val);
-	bool sismember(std::string key, std::string val);
-	bool smembers(std::string key, std::vector<std::string> &out);
-	bool srem(std::string key, std::string val);
+	bool sadd(str key, str val);
+	bool sismember(str key, str val);
+	bool smembers(str key, std::vector<str> &out);
+	bool srem(str key, str val);
 
 	// deletion
-	bool del(std::string key);
+	bool del(str key);
 	bool flushall();
 
 private:
