@@ -113,6 +113,31 @@ CommandParser::consume(const char c) {
 				state = ss_star;
 				m_num.reset();
 				return CONSUME_OK;
+			} else if(isalpha(c)) { // first char is a letter
+				on_argc(0);
+				m_word.push_back(c);
+				state = ss_letter;
+				return CONSUME_OK;
+			}
+			break;
+
+		case ss_letter:
+			if(c == '\r') {
+				return CONSUME_OK;
+			} else if(c == '\n') {
+				if(!m_word.empty()) {
+					on_argv(&m_word[0], m_word.size());
+					m_word.clear();
+				}
+				state = ss_lf;
+				return CONSUME_END;
+			} else if(isspace(c)) { // end of word
+				on_argv(&m_word[0], m_word.size());
+				m_word.clear();
+				return CONSUME_OK;
+			} else {	// add to current word.
+				m_word.push_back(c);
+				return CONSUME_OK;
 			}
 			break;
 
@@ -181,11 +206,15 @@ CommandParser::consume(const char c) {
 				state = ss_lf;
 				if(++m_curarg == m_argc) {
 					// last callback
-					on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
+					if(m_argv) {
+						on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
+					}
 					return CONSUME_END;
 				} else {
 					// callback with complete argument
-					on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
+					if(m_argv) {
+						on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
+					}
 					state = ss_argc;
 					return CONSUME_OK;
 				}
@@ -263,6 +292,6 @@ Parser::on_argc(int n) {
 
 void
 Parser::on_argv(const char *s, size_t sz) {
-	m_cmd->add(str(s, sz));
+	m_cmd->add(str(s, sz, 1));
 }
 

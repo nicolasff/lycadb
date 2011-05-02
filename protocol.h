@@ -2,6 +2,7 @@
 #define PROTOCOL_H
 
 #include <cstring> // size_t
+#include <vector>
 #include <tr1/functional>
 
 typedef enum {
@@ -46,6 +47,12 @@ private:
 
 	enum {
 		ss_start = 1,
+
+		// simple line parser
+		ss_letter,
+		ss_space,
+
+		// chunked protocol parser
 		ss_star,
 		ss_argc,
 		ss_dollar,
@@ -60,6 +67,7 @@ private:
 	size_t *m_argvlen;
 	char *m_arg;
 
+	std::vector<char> m_word;
 
 	NumParser m_num;
 
