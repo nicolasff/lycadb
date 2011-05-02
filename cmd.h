@@ -4,6 +4,9 @@
 #include "str.h"
 #include <vector>
 
+/**
+ * A Command object is a simple list of binary strings.
+ */
 class Command {
 
 public:

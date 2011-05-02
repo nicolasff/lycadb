@@ -11,6 +11,8 @@ using namespace std::tr1::placeholders;
 
 Dispatcher::Dispatcher(Store &s) : m_store(s) {
 
+	// bind internal, private methods to keywords.
+
 	m_functions["GET"] = tr1::bind(&Dispatcher::get, this, _1);
 	m_functions["SET"] = tr1::bind(&Dispatcher::set, this, _1);
 	m_functions["DEL"] = tr1::bind(&Dispatcher::del, this, _1);
@@ -28,11 +30,13 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 Reply*
 Dispatcher::run(Command &cmd) {
 
-	str verb = cmd.verb();
+	// look for command
 	map<str, Handler>::iterator fun = m_functions.find(cmd.verb());
-	if(fun == m_functions.end()) {
+
+	if(fun == m_functions.end()) {	// not found in command table.
 		return new ErrorReply("Unknown command");
 	} else {
+		// execute
 		return fun->second(cmd);
 	}
 }
@@ -48,7 +52,7 @@ Dispatcher::get(Command &cmd) {
 
 	str key(cmd.argv(1)), val;
 	if(m_store.get(key, &val)) {
-		return new StringReply(val);
+		return new StringReply(val); // the reply object owns `val'.
 	} else {
 		return new EmptyReply();
 	}

@@ -10,19 +10,22 @@ class Store;
 class Command;
 class Reply;
 
-
+/**
+ * The Dispatcher object transforms a Command into a Reply.
+ * It keeps a reference to the Store in order to do so.
+ */
 class Dispatcher {
 
 public:
 	Dispatcher(Store &s);
 	Reply* run(Command &cmd);
 
-
 	typedef std::tr1::function<Reply* (Command&)> Handler;
 
 private:
 	Store &m_store;
 
+	// function name to implementation
 	std::map<str, Handler> m_functions;
 
 	// implementations

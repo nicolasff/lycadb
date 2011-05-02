@@ -8,6 +8,10 @@
 
 class Dispatcher;
 
+/**
+ * A Client object represents a remote TCP client.
+ * It maintains it state using a Parser object.
+ */
 class Client {
 public:
 	Client(int fd, struct event_base *base, Dispatcher &d);
@@ -29,6 +33,10 @@ private:
 
 class Store;
 
+/**
+ * The Server object accepts new connections, creates Client
+ * objects, and owns the dispatcher object.
+ */
 class Server {
 public:
 	Server(std::string host, short port, Store &store);
@@ -52,6 +60,7 @@ private:
 
 	// link to store.
 	Dispatcher *m_dispatcher;
+	Store &m_store;
 
 	friend void on_connect(int, short, void *);
 };

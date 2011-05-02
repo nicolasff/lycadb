@@ -3,6 +3,9 @@
 
 #include <cstring> // size_t
 
+// str is a simple class used to handle binary strings.
+// By design, it only supports shallow copying.
+
 class str {
 
 public:

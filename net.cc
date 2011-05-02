@@ -2,6 +2,7 @@
 #include "cmd.h"
 #include "reply.h"
 #include "dispatcher.h"
+#include "store.h"
 
 #include <csignal>
 #include <cstring>
@@ -18,7 +19,8 @@ using namespace std::tr1::placeholders;
 
 Server::Server(string host, short port, Store &store) :
 	m_host(host),
-	m_port(port) {
+	m_port(port),
+	m_store(store) {
 
 	m_dispatcher = new Dispatcher(store);
 }
@@ -35,7 +37,7 @@ on_connect(int fd, short event, void *ptr) {
 	struct sockaddr_in addr;
 	socklen_t addr_sz = sizeof(addr);
 
-	/* accept client */
+	// accept client
 	int client_fd = accept(fd, (struct sockaddr*)&addr, &addr_sz);
 	s->on_connect(client_fd);	// process new client
 }
@@ -47,20 +49,31 @@ Server::reset_event() {
 	event_add(&m_ev, NULL);
 }
 
+static event_base *base;
+static void
+on_sigint(int) {
+	event_base_loopbreak(base);
+}
+
 void
 Server::start() {
+
+	signal(SIGINT, on_sigint);
 
 	// create server socket
 	m_fd = socket();
 
 	// initialize libevent
-	m_base = event_base_new();
+	base = m_base = event_base_new();
 
 	// add connection event
 	reset_event();
 
 	// wait for clients
 	event_base_dispatch(m_base);
+
+	// cleanup after shutdown request
+	m_store.shutdown();
 }
 
 void
@@ -89,44 +102,44 @@ Server::socket() const {
 	memset(&(addr.sin_addr), 0, sizeof(addr.sin_addr));
 	addr.sin_addr.s_addr = inet_addr(m_host.c_str());
 
-	/* this sad list of tests could use a Maybe monad... */
+	// this sad list of tests could use a Maybe monad...
 
-	/* create socket */
+	// create socket
 	fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (-1 == fd) {
-		/*syslog(LOG_ERR, "Socket error: %m\n");*/
+		//syslog(LOG_ERR, "Socket error: %m\n");
 		return -1;
 	}
 
-	/* reuse address if we've bound to it before. */
+	// reuse address if we've bound to it before.
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse,
 				sizeof(reuse)) < 0) {
-		/* syslog(LOG_ERR, "setsockopt error: %m\n"); */
+		// syslog(LOG_ERR, "setsockopt error: %m\n");
 		return -1;
 	}
 
-	/* set socket as non-blocking. */
+	// set socket as non-blocking.
 	ret = fcntl(fd, F_SETFD, O_NONBLOCK);
 	if (0 != ret) {
-		/* syslog(LOG_ERR, "fcntl error: %m\n"); */
+		// syslog(LOG_ERR, "fcntl error: %m\n");
 		return -1;
 	}
 
-	/* bind */
+	// bind
 	ret = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
 	if (0 != ret) {
-		/* syslog(LOG_ERR, "Bind error: %m\n"); */
+		// syslog(LOG_ERR, "Bind error: %m\n");
 		return -1;
 	}
 
-	/* listen */
+	// listen
 	ret = listen(fd, SOMAXCONN);
 	if (0 != ret) {
-		/* syslog(LOG_DEBUG, "Listen error: %m\n"); */
+		// syslog(LOG_DEBUG, "Listen error: %m\n");
 		return -1;
 	}
 
-	/* there you go, ready to accept! */
+	// there you go, ready to accept!
 	return fd;
 }
 ////////////////////////////////////////////////////////////////////////////////
