@@ -8,6 +8,7 @@
 
 class Reply {
 public:
+	virtual ~Reply();
 	virtual bool write(int) const = 0;
 };
 
@@ -29,6 +30,7 @@ class StringReply : public Reply {
 
 public:
 	StringReply(str s);
+	~StringReply();
 	virtual bool write(int) const;
 
 private:

@@ -4,6 +4,9 @@
 
 using namespace std;
 
+Reply::~Reply() {
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 IntReply::IntReply(int val) : m_val(val) {
@@ -26,6 +29,10 @@ IntReply::write(int fd) const {
 ////////////////////////////////////////////////////////////////////////////////
 
 StringReply::StringReply(str s) : m_str(s) {
+}
+
+StringReply::~StringReply() {
+	m_str.reset(); // discard my string
 }
 
 bool

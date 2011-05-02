@@ -2,10 +2,10 @@
 #include "cmd.h"
 
 #include <cctype>
-#include <functional> 
+#include <functional>
 
 using namespace std;
-using namespace std::tr1::placeholders; 
+using namespace std::tr1::placeholders;
 
 /**
  * NumParser state machine
@@ -92,14 +92,15 @@ void
 CommandParser::reset() {
 	state = ss_start;
 
-	if(!on_argv) {
-		for(int i = 0; i < m_argc; ++i) {
-			delete[](m_argv[i]);
-		}
+	for(int i = 0; i < m_argc; ++i) {
+		delete[](m_argv[i]);
 	}
+
 	delete[](m_argv);
 	delete[](m_argvlen);
 
+	m_argv = 0;
+	m_argvlen = 0;
 	m_argc = 0;
 }
 
@@ -107,7 +108,7 @@ parsing_err
 CommandParser::consume(const char c) {
 
 	switch(state) {
-		
+
 		case ss_start:
 			if(c == '*') {
 				state = ss_star;
@@ -122,10 +123,10 @@ CommandParser::consume(const char c) {
 			break;
 
 		case ss_letter:
-			if(c == '\r') {
+			if(c == '\r') {	// end of line approaching
 				return CONSUME_OK;
-			} else if(c == '\n') {
-				if(!m_word.empty()) {
+			} else if(c == '\n') {	// end of the line.
+				if(!m_word.empty()) {	// process last word.
 					on_argv(&m_word[0], m_word.size());
 					m_word.clear();
 				}
@@ -182,7 +183,7 @@ CommandParser::consume(const char c) {
 				case CONSUME_ERROR:
 					return CONSUME_ERROR;
 			}
-		
+
 		case ss_data:
 			if(m_arg == m_argv[m_curarg] + m_argvlen[m_curarg]) { // just one after the data
 				if(c == '\r') {
@@ -200,7 +201,7 @@ CommandParser::consume(const char c) {
 			}
 
 			break;
-			
+
 		case ss_cr:
 			if(c == '\n') {
 				state = ss_lf;
@@ -228,7 +229,7 @@ CommandParser::consume(const char c) {
 			break;
 
 	}
-	
+
 	return CONSUME_ERROR;
 }
 
@@ -287,11 +288,13 @@ Parser::setFailureCb(tr1::function<void (void)> f) {
 
 void
 Parser::on_argc(int n) {
+	// create a new command, allocating space if possible.
 	m_cmd = new Command(n);
 }
 
 void
 Parser::on_argv(const char *s, size_t sz) {
+	// add argument, duplicating the buffer.
 	m_cmd->add(str(s, sz, 1));
 }
 

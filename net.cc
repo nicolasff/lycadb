@@ -10,11 +10,11 @@
 
 #include <event.h>
 #include <iostream>
-#include <functional> 
+#include <functional>
 
 
 using namespace std;
-using namespace std::tr1::placeholders; 
+using namespace std::tr1::placeholders;
 
 Server::Server(string host, short port, Store &store) :
 	m_host(host),
@@ -31,7 +31,7 @@ on_connect(int fd, short event, void *ptr) {
 
 	(void)event;
 	Server *s = static_cast<Server*>(ptr);
-	
+
 	struct sockaddr_in addr;
 	socklen_t addr_sz = sizeof(addr);
 
@@ -58,14 +58,14 @@ Server::start() {
 
 	// add connection event
 	reset_event();
-	
+
 	// wait for clients
 	event_base_dispatch(m_base);
 }
 
 void
 Server::on_connect(int fd) {
-	
+
 	reset_event(); // reinstall handler for more clients
 
 	Client *c = new Client(fd, this->m_base, *m_dispatcher);

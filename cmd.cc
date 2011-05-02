@@ -4,7 +4,7 @@ using namespace std;
 
 Command::Command(int argc) :
 	m_argc(argc) {
-	
+
 	m_args.reserve(argc);
 
 }
