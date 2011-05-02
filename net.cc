@@ -10,7 +10,6 @@
 #include <fcntl.h>
 
 #include <event.h>
-#include <iostream>
 #include <functional>
 
 
@@ -94,7 +93,6 @@ Server::on_connect(int fd) {
 
 	m_workers[worker_cur]->add(fd);
 	worker_cur = (worker_cur+1) % m_workers.size();
-
 }
 
 
@@ -204,6 +202,7 @@ Client::on_data() {
 		reset_event();	// reinstall event
 		m_p.consume(buffer, (size_t)ret);
 	} else {
+		close(m_fd);
 		delete this;	// ew.
 	}
 }
@@ -236,7 +235,7 @@ Worker::Worker(Dispatcher &d):
 	int ret = pipe(m_fd);
 	(void)ret;
 
-	event_set(&m_ev, m_fd[0], EV_READ, ::on_available_client, this);
+	event_set(&m_ev, m_fd[0], EV_READ | EV_PERSIST, ::on_available_client, this);
 	event_base_set(m_base, &m_ev);
 	event_add(&m_ev, NULL);
 }

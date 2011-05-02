@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cstdlib>
+#include <iostream>
 
 using namespace std;
 using namespace std::tr1::placeholders;
