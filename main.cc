@@ -51,7 +51,7 @@ main() {
 	Store s("db0");
 	s.startup();
 	s.install();
-	Server srv("127.0.0.1", 1111, s);
+	Server srv("127.0.0.1", 1111, 8, s);
 	srv.start();
 
 	return 0;

@@ -17,12 +17,15 @@
 using namespace std;
 using namespace std::tr1::placeholders;
 
-Server::Server(string host, short port, Store &store) :
+Server::Server(string host, short port, int workers, Store &store) :
 	m_host(host),
 	m_port(port),
-	m_store(store) {
+	m_store(store),
+	worker_cur(0) {
 
 	m_dispatcher = new Dispatcher(store);
+
+	m_workers.assign(workers, static_cast<Worker*>(0));	// init all workers to zero
 }
 
 Server::~Server() {
@@ -69,6 +72,14 @@ Server::start() {
 	// add connection event
 	reset_event();
 
+	// start threads
+	vector<Worker*>::iterator wi;
+	for(size_t i = 0; i < m_workers.size(); ++i) {
+		Worker *w = new Worker(*m_dispatcher);
+		m_workers[i] = w;
+		w->start();
+	}
+
 	// wait for clients
 	event_base_dispatch(m_base);
 
@@ -81,8 +92,9 @@ Server::on_connect(int fd) {
 
 	reset_event(); // reinstall handler for more clients
 
-	Client *c = new Client(fd, this->m_base, *m_dispatcher);
-	c->reset_event();
+	m_workers[worker_cur]->add(fd);
+	worker_cur = (worker_cur+1) % m_workers.size();
+
 }
 
 
@@ -142,6 +154,7 @@ Server::socket() const {
 	// there you go, ready to accept!
 	return fd;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Client::Client(int fd, struct event_base *base, Dispatcher &d) :
@@ -193,4 +206,65 @@ Client::on_data() {
 	} else {
 		delete this;	// ew.
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void*
+on_thread_start(void *ptr) {
+	Worker *w = static_cast<Worker*>(ptr);
+
+	w->main();
+
+	return 0;
+}
+
+void
+on_available_client(int fd, short event, void *ptr) {
+
+	(void)event;
+	(void)fd;
+
+	Worker *w = static_cast<Worker*>(ptr);
+	w->read_client();	// process new data
+}
+
+Worker::Worker(Dispatcher &d):
+	m_dispatcher(d) {
+
+	m_base = event_base_new();
+	int ret = pipe(m_fd);
+	(void)ret;
+
+	event_set(&m_ev, m_fd[0], EV_READ, ::on_available_client, this);
+	event_base_set(m_base, &m_ev);
+	event_add(&m_ev, NULL);
+}
+
+void
+Worker::start() {
+
+	pthread_create(&m_self, NULL, on_thread_start, this);
+}
+
+void
+Worker::main() {
+
+	event_base_dispatch(m_base);
+}
+
+void
+Worker::add(int fd) {
+	int ret = write(m_fd[1], &fd, sizeof(fd));
+	(void)ret;
+}
+
+void
+Worker::read_client() {
+	int fd;
+	int ret = read(m_fd[0], &fd, sizeof(fd));
+	(void)ret;
+
+	Client *c = new Client(fd, this->m_base, m_dispatcher);
+	c->reset_event();
 }

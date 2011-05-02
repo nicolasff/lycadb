@@ -2,6 +2,7 @@
 #define NET_H
 
 #include <string>
+#include <vector>
 #include <event.h>
 
 #include "protocol.h"
@@ -32,6 +33,7 @@ private:
 };
 
 class Store;
+class Worker;
 
 /**
  * The Server object accepts new connections, creates Client
@@ -39,7 +41,7 @@ class Store;
  */
 class Server {
 public:
-	Server(std::string host, short port, Store &store);
+	Server(std::string host, short port, int threads, Store &store);
 	~Server();
 	void start();
 
@@ -63,6 +65,33 @@ private:
 	Store &m_store;
 
 	friend void on_connect(int, short, void *);
+
+	std::vector<Worker*> m_workers;
+	int worker_cur;
+};
+
+class Worker {
+public:
+	Worker(Dispatcher &d);
+	void add(int fd);
+	void start();
+
+private:
+	int m_fd[2];
+	event_base *m_base;
+	event m_ev;
+
+	pthread_t m_self;
+
+	void read_client();
+	void main();
+
+	// link to store.
+	Dispatcher &m_dispatcher;
+
+friend	void on_available_client(int fd, short event, void *ptr);
+friend	void* on_thread_start(void *);
+
 };
 
 #endif
