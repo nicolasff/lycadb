@@ -48,7 +48,6 @@ main() {
 	return 0;
 	*/
 
-
 	Store s("db0");
 	s.startup();
 	s.install();
@@ -63,7 +62,7 @@ main() {
 	s.flushall();
 
 	// typedef for a key-value pair.
-	typedef pair<string,string> key_value_t;
+	typedef pair<str,str> key_value_t;
 	vector<key_value_t> kv_pairs;
 
 	// generate key-value pairs.
@@ -73,13 +72,17 @@ main() {
 		ssk << "key-" << i;
 		ssv << "val-" << i;
 
-		kv_pairs.push_back(make_pair(ssk.str(), ssv.str()));
+		string key = ssk.str(), val = ssv.str();
+
+		kv_pairs.push_back(make_pair(
+					str(key.c_str(), key.size(), 1),
+					str(val.c_str(), val.size(), 1)));
 	}
 
 	// iterator
 	vector<key_value_t>::const_iterator kvi;
 
-#if 0
+#if 1
 	BENCH("SET", n, {
 		// insert all
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
@@ -90,15 +93,18 @@ main() {
 	// read back all the data.
 	BENCH("GET", n, {
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
-			string val;
-			//s.get(kvi->first, val);
+			str val;
+			s.get(kvi->first, &val);
+			val.reset();
 		}
 	});
 
 	BENCH("UPDATE", n, {
 		// update all
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
-			s.set(kvi->first, kvi->second + "-new");
+			string newval = kvi->second.c_str();
+			newval += "-new";
+			s.set(kvi->first, newval.c_str());
 		}
 	});
 
@@ -112,7 +118,8 @@ main() {
 	BENCH("INCR", n, {
 		// incr all.
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
-			s.incr(kvi->first);
+			int out;
+			s.incr(kvi->first, 1, out);
 		}
 	});
 
