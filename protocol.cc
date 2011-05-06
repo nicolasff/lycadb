@@ -81,10 +81,11 @@ NumParser::operator int() const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-CommandParser::CommandParser()
+CommandParser::CommandParser(Parser &parent)
 	: m_argc(0)
 	, m_argv(0)
-	, m_argvlen(0) {
+	, m_argvlen(0)
+	, m_parent(parent) {
 	reset();
 }
 
@@ -110,12 +111,12 @@ CommandParser::consume(const char c) {
 	switch(state) {
 
 		case ss_start:
-			if(c == '*') {
+			if(c == '*') { // reading chunks.
 				state = ss_star;
 				m_num.reset();
 				return CONSUME_OK;
 			} else if(isalpha(c)) { // first char is a letter
-				on_argc(0);
+				m_parent.on_argc(0);
 				m_word.push_back(c);
 				state = ss_letter;
 				return CONSUME_OK;
@@ -127,13 +128,13 @@ CommandParser::consume(const char c) {
 				return CONSUME_OK;
 			} else if(c == '\n') {	// end of the line.
 				if(!m_word.empty()) {	// process last word.
-					on_argv(&m_word[0], m_word.size());
+					m_parent.on_argv(&m_word[0], m_word.size());
 					m_word.clear();
 				}
 				state = ss_lf;
 				return CONSUME_END;
 			} else if(isspace(c)) { // end of word
-				on_argv(&m_word[0], m_word.size());
+				m_parent.on_argv(&m_word[0], m_word.size());
 				m_word.clear();
 				return CONSUME_OK;
 			} else {	// add to current word.
@@ -150,7 +151,7 @@ CommandParser::consume(const char c) {
 					m_argvlen = new size_t[m_argc];
 					m_curarg = 0;
 					state = ss_argc;
-					if(on_argc) on_argc(m_argc);
+					m_parent.on_argc(m_argc);
 					return CONSUME_OK;
 
 				case CONSUME_OK:
@@ -207,15 +208,11 @@ CommandParser::consume(const char c) {
 				state = ss_lf;
 				if(++m_curarg == m_argc) {
 					// last callback
-					if(m_argv) {
-						on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
-					}
+					m_parent.on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
 					return CONSUME_END;
 				} else {
 					// callback with complete argument
-					if(m_argv) {
-						on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
-					}
+					m_parent.on_argv(m_argv[m_curarg-1], m_argvlen[m_curarg-1]);
 					state = ss_argc;
 					return CONSUME_OK;
 				}
@@ -233,21 +230,9 @@ CommandParser::consume(const char c) {
 	return CONSUME_ERROR;
 }
 
-void
-CommandParser::setArgcCb(tr1::function<void (int)> f) {
-	on_argc = f;
-}
-void
-CommandParser::setArgvCb(tr1::function<void (const char *, size_t)> f) {
-	on_argv = f;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
-Parser::Parser() {
-
-	m_cp.setArgcCb(tr1::bind(&Parser::on_argc, this, _1));
-	m_cp.setArgvCb(tr1::bind(&Parser::on_argv, this, _1, _2));
+Parser::Parser(): m_cp(*this) {
 }
 
 Parser::~Parser() {

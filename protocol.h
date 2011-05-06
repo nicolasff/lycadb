@@ -10,6 +10,8 @@ typedef enum {
 	CONSUME_END,
 	CONSUME_ERROR} parsing_err;
 
+// Parse a number, such as the number of parameters
+// or the length of a string.
 class NumParser {
 
 public:
@@ -33,15 +35,16 @@ private:
 	int m_num;
 };
 
+class Parser;
+// Parse a whole command, either in line mode
+// or in multi-chunk mode.
 class CommandParser {
 
 public:
-	CommandParser();
+	CommandParser(Parser &parent);
 
 	void reset();
 	parsing_err consume(const char c);
-	void setArgcCb(std::tr1::function<void (int)> f);
-	void setArgvCb(std::tr1::function<void (const char *, size_t)> f);
 
 private:
 
@@ -67,13 +70,11 @@ private:
 	size_t *m_argvlen;
 	char *m_arg;
 
+	// current word in line-reading mode.
 	std::vector<char> m_word;
 
-	NumParser m_num;
-
-	// callbacks
-	std::tr1::function<void (int)> on_argc;
-	std::tr1::function<void (const char *, size_t)> on_argv;
+	NumParser m_num;	// used to parse numbers.
+	Parser &m_parent;	// used to send callbacks.
 };
 
 class Command;
@@ -83,6 +84,7 @@ public:
 	Parser();
 	~Parser();
 
+	// register callbacks
 	void setSuccessCb(std::tr1::function<void (Command*)> f);
 	void setFailureCb(std::tr1::function<void (void)> f);
 	void consume(const char *s, size_t sz);
@@ -91,11 +93,14 @@ private:
 	CommandParser m_cp;
 	Command *m_cmd;
 
+	// callbacks
 	std::tr1::function<void (Command*)> on_success;
 	std::tr1::function<void (void)> on_failure;
 
+	// called from CommandParser
 	void on_argc(int);
 	void on_argv(const char *, size_t);
+	friend class CommandParser;
 };
 
 #endif
