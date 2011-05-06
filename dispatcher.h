@@ -10,6 +10,19 @@ class Store;
 class Command;
 class Reply;
 
+typedef std::tr1::function<Reply* (Command&)> CommandFun;
+
+// a command handler checks for argc and runs the command.
+class CommandHandler {
+public:
+	CommandHandler(CommandFun f = 0, size_t min = 1, size_t max = 1);
+	Reply* operator()(Command &cmd);
+
+private:
+	CommandFun m_fun;
+	size_t m_min, m_max;
+};
+
 /**
  * The Dispatcher object transforms a Command into a Reply.
  * It keeps a reference to the Store in order to do so.
@@ -20,13 +33,11 @@ public:
 	Dispatcher(Store &s);
 	Reply* run(Command &cmd);
 
-	typedef std::tr1::function<Reply* (Command&)> Handler;
-
 private:
 	Store &m_store;
 
 	// function name to implementation
-	std::map<str, Handler> m_functions;
+	std::map<str, CommandHandler> m_functions;
 
 	// implementations
 	Reply* get(Command &cmd);

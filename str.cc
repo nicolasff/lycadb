@@ -14,8 +14,9 @@ str::str(const char *s, size_t sz, int dup) :
 	m_sz(sz) {
 
 	if(dup) {
-		m_s = new char[sz];
+		m_s = new char[sz+1];
 		memcpy((char*)m_s, (const char*)s, sz);
+		((char*)m_s)[sz] = 0;	// end with null char if dup'd
 	}
 
 }
@@ -27,6 +28,10 @@ str::c_str() const {
 size_t
 str::size() const {
 	return m_sz;
+}
+bool
+str::empty() const {
+	return (m_sz == 0);
 }
 
 void

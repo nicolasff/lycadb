@@ -15,6 +15,7 @@ public:
 
 	const char *c_str() const;
 	size_t size() const;
+	bool empty() const;
 	void reset();
 
 	bool operator!=(const str &s) const;

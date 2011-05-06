@@ -20,17 +20,20 @@ KVTable::create() {
 	ib_tbl_sch_t schema = NULL;
 
 	// create schema
-	if((err = ib_table_schema_create(m_name.c_str(), &schema, IB_TBL_COMPACT, 0)) != DB_SUCCESS) {
+	if((err = ib_table_schema_create(m_name.c_str(),
+			&schema, IB_TBL_COMPACT, 0)) != DB_SUCCESS) {
 		return false;
 	}
 
 	// add `key` column as VARCHAR(64)
-	if((err = ib_table_schema_add_col(schema, "key", IB_VARCHAR, IB_COL_NOT_NULL, 0, 64)) != DB_SUCCESS) {
+	if((err = ib_table_schema_add_col(schema, "key", IB_VARCHAR,
+			IB_COL_NOT_NULL, 0, 64)) != DB_SUCCESS) {
 		return false;
 	}
 
 	// add `val` column as BLOB
-	if((err = ib_table_schema_add_col(schema, "val", IB_BLOB, IB_COL_NOT_NULL, 0, 0)) != DB_SUCCESS) {
+	if((err = ib_table_schema_add_col(schema, "val", IB_BLOB,
+			IB_COL_NOT_NULL, 0, 0)) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -58,18 +61,17 @@ KVTable::set(str key, str val) {
 
 	if(row) { // existing value
 
+		// look up existing value
 		str old((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 
-		if(old == val) {	// no need to update
+		if(old == val) {	// same as the new one, no need to update.
 			rollback(trx, cursor, row);
 			return true;
 		} else {
 			// convert back to string and update row.
 			ret = update_row(cursor, row, val);
 		}
-
-
-	} else { // insert value.
+	} else { // no value, insert new row.
 		ret = insert_row(cursor, key, val);
 	}
 
@@ -124,11 +126,11 @@ KVTable::incr(str key, int by, int &out) {
 		int i = 0;
 
 		// read value
-		string s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
+		str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1));
 		if(s.empty()) {
 			i = 0;
 		} else {
-			ss << s;
+			ss.write(s.c_str(), s.size());
 
 			// convert to number and increment
 			ss >> i;
@@ -137,12 +139,16 @@ KVTable::incr(str key, int by, int &out) {
 		}
 
 		// save into output parameter.
-		out = (i + by);
+		out = i + by;
 
-		// convert back to string and update row.
+		// convert back to string.
 		ss << out;
 		string tmp = ss.str();
-		ret = update_row(cursor, row, str(tmp.c_str(), tmp.size(), 1));
+
+		// update row.
+		str s_new(tmp.c_str(), tmp.size(), 1);
+		ret = update_row(cursor, row, s_new);
+		s_new.reset();	// free memory.
 
 	} else { // insert with value = "1".
 		ret = insert_row(cursor, key, "1");

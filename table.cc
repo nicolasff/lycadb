@@ -92,18 +92,18 @@ Table::commit(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
 
 	ib_err_t err;
 
-	if(cursor) err = ib_cursor_close(cursor);
-	if(row) ib_tuple_delete(row);
-	if(trx) err = ib_trx_commit(trx);
+	if(cursor) err = ib_cursor_close(cursor);	// close cursor
+	if(row) ib_tuple_delete(row);			// delete tuple
+	if(trx) err = ib_trx_commit(trx);		// commit trx
 }
 
 void
 Table::rollback(ib_trx_t trx, ib_crsr_t cursor, ib_tpl_t row) {
 	ib_err_t err;
 
-	if(cursor) err = ib_cursor_close(cursor);
-	if(row) ib_tuple_delete(row);
-	if(trx) err = ib_trx_commit(trx);
+	if(cursor) err = ib_cursor_close(cursor);	// close cursor
+	if(row) ib_tuple_delete(row);			// delete tuple
+	if(trx) err = ib_trx_rollback(trx);		// rollback trx
 }
 
 bool
@@ -168,7 +168,7 @@ Table::del(str key) {
 	}
 
 	bool ret = false;
-	if(row) { // found value
+	if(row) { // found value, delete row
 		ret = (ib_cursor_delete_row(cursor) == DB_SUCCESS);
 	}
 
@@ -194,22 +194,31 @@ Table::install_schema(ib_tbl_sch_t &schema) {
 
 	ib_err_t err;
 
+	// begin transaction
 	ib_trx_t trx = ib_trx_begin(IB_TRX_SERIALIZABLE);
+
+	// lock schema
 	if((err = ib_schema_lock_exclusive(trx)) != DB_SUCCESS) {
 		ret = false;
 	}
+
+	// create table
 	if((err = ib_table_create(trx, schema, &m_tid)) != DB_SUCCESS) {
 		ret = false;
 	}
+
+	// unlock schema
 	if((err = ib_schema_unlock(trx)) != DB_SUCCESS) {
 		ret = false;
 	}
+
+	// commit transaction
 	if((err = ib_trx_commit(trx)) != DB_SUCCESS) {
 		ret = false;
 	}
+
+	// cleanup schema
 	ib_table_schema_delete(schema);
 
 	return ret;
-
 }
-
