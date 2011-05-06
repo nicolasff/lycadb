@@ -10,10 +10,12 @@
 #include "kvtable.h"
 #include "settable.h"
 
+class Config;
+
 class Store {
 
 public:
-	Store(std::string db);
+	Store(std::string db, Config &config);
 
 	bool startup();
 	bool shutdown();
@@ -45,6 +47,8 @@ private:
 	std::string m_db;
 	KVTable m_main;
 	SetTable m_sets;
+
+	Config &m_config;
 };
 
 #endif

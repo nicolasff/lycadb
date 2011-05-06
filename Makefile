@@ -1,7 +1,7 @@
-OUT=main
-OBJS=main.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o str.o
+OUT=lycadb
+OBJS=lycadb.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o str.o config.o
 
-CFLAGS=-O0 -ggdb -Wall -Wextra
+CFLAGS=-O3 -Wall -Wextra
 LDFLAGS=-levent -pthread -lhaildb
 
 all: $(OUT) Makefile

@@ -1,16 +1,16 @@
 #include "store.h"
+#include "config.h"
 
 #include <string>
-#include <iostream>
-#include <cstring>
 #include <sstream>
 
 #include <haildb.h>
 
 using namespace std;
 
-Store::Store(string db) :
-	m_db(db), m_main(db + "/main"), m_sets(db + "/sets") {
+Store::Store(string db, Config &config) :
+	m_db(db), m_main(db + "/main"), m_sets(db + "/sets"),
+	m_config(config) {
 }
 
 bool
@@ -21,14 +21,26 @@ Store::startup() {
 	// initialize HailDB.
 	err = ib_init();
 
-	// configure a few options
-	err = ib_cfg_set("data_home_dir", "/tmp/");
-	err = ib_cfg_set("log_group_home_dir", "/tmp/");
-	err = ib_cfg_set("log_file_size", 128*1024*1024);
-	err = ib_cfg_set("buffer_pool_size", 512);
-	err = ib_cfg_set("flush_log_at_trx_commit", 2);
-	err = ib_cfg_set_bool_on("adaptive_hash_index");
-	err = ib_cfg_set_bool_on("adaptive_flushing");
+	// configure options.
+	Config::const_iterator ci;
+	for(ci = m_config.begin(); ci != m_config.end(); ci++) {
+		const char * key = ci->first.c_str();
+		string val = ci->second;
+
+		if(val == "On") {	// bool, on
+			err = ib_cfg_set_bool_on(key);
+		} else if(val == "Off") { // bool, off
+			err = ib_cfg_set_bool_off(key);
+		} else if(val.find_first_not_of("0123456789") == string::npos) { // int
+			stringstream ss;
+			ss << val;
+			int i;
+			ss >> i;
+			err = ib_cfg_set(key, i);
+		} else {	// string
+			err = ib_cfg_set(key, val.c_str());
+		}
+	}
 
 	// actually start HailDB
 	err = ib_startup("barracuda");

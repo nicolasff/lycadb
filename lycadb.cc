@@ -7,9 +7,8 @@
 #include <pthread.h>
 
 #include "store.h"
-#include "protocol.h"
-#include "cmd.h"
 #include "net.h"
+#include "config.h"
 
 using namespace std;
 
@@ -23,39 +22,20 @@ using namespace std;
 		cout << name << ": " << (mili1-mili0) / 1000 << " sec. (" << (1000 * n / (mili1-mili0)) << "/sec)" << endl;\
 	}
 
-void
-on_cmd(Command *c) {
-	delete c;
-}
-void
-on_failure() {
-	//cout << "ON FAILURE" << endl;
-}
-
 int
 main() {
 	// quick and unscientific benchmarking.
 
-	/*
-	Parser p;
-	p.setSuccessCb(on_cmd);
-	p.setFailureCb(on_failure);
-	char str[] = "*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n";
-	for(int i = 0; i < 600*1000; ++i) {
-		p.consume(str, sizeof(str)-1);
-	}
-
-	return 0;
-	*/
-
-	Store s("db0");
+	Config cfg;
+	cfg.read("lycadb.conf");
+	Store s("db0", cfg);
 	s.startup();
 	s.install();
 	Server srv("127.0.0.1", 1111, 8, s);
 	srv.start();
 
 	return 0;
-
+#if 0
 	cout << "Benchmarking, please wait." << endl;
 
 	// start with an empty table.
@@ -82,7 +62,6 @@ main() {
 	// iterator
 	vector<key_value_t>::const_iterator kvi;
 
-#if 1
 	BENCH("SET", n, {
 		// insert all
 		for(kvi = kv_pairs.begin(); kvi != kv_pairs.end(); kvi++) {
@@ -150,9 +129,9 @@ main() {
 			s.sismember(kvi->first, kvi->second);
 		}
 	});
-#endif
 
 	s.shutdown();
+#endif
 
 	return 0;
 }
