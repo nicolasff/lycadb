@@ -117,7 +117,7 @@ Table::get_cursor(str key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
 
 	// open cursor
 	cursor = 0;
-	if((err = ib_cursor_open_table(m_name.c_str(), trx, &cursor)) != DB_SUCCESS) {
+	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
 		cerr << ib_strerror(err) << endl;
 	}
 
@@ -184,8 +184,7 @@ Table::del(str key) {
 
 bool
 Table::flushall() {
-	ib_id_t tid = 0;
-	return (ib_table_truncate(m_name.c_str(), &tid) == DB_SUCCESS);
+	return (ib_table_truncate(m_name.c_str(), &m_tid) == DB_SUCCESS);
 }
 
 bool

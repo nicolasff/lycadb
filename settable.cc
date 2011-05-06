@@ -137,7 +137,7 @@ SetTable::get_cursor(str &key, str &val,
 
 	// open cursor
 	cursor = 0;
-	if((err = ib_cursor_open_table(m_name.c_str(), trx, &cursor)) != DB_SUCCESS) {
+	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -206,7 +206,7 @@ SetTable::smembers(str key, std::vector<str> &out) {
 
 	// open cursor
 	ib_crsr_t cursor = 0;
-	if((err = ib_cursor_open_table(m_name.c_str(), trx, &cursor)) != DB_SUCCESS) {
+	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
 		cerr << ib_strerror(err) << endl;
 	}
 
