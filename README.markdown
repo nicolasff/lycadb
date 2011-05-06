@@ -66,6 +66,6 @@ I have tried to benchmark LycaDB using different workloads, and have seen variab
 
 I think it is important to compare similar systems: benchmarking writes to disk with LycaDB against writes to memory with Redis is not helpful, especially since LycaDB will keep accepting writes after the buffer pool is filled whereas Redis will start rejecting writes.
 
-Here is a quick benchmark, of 100 client doing 10M writes (SET) followed by 10M reads (GET) in random order:
+Here is a quick benchmark, of 100 clients doing 10M writes (SET) followed by 10M reads (GET) in random order:
 ![bench](http://i.imgur.com/EVcnv.png)
 
