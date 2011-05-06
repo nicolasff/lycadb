@@ -32,11 +32,7 @@ Store::startup() {
 		} else if(val == "Off") { // bool, off
 			err = ib_cfg_set_bool_off(key);
 		} else if(val.find_first_not_of("0123456789") == string::npos) { // int
-			stringstream ss;
-			ss << val;
-			int i;
-			ss >> i;
-			err = ib_cfg_set(key, i);
+			err = ib_cfg_set(key, m_config.get<int>(key));
 		} else {	// string
 			err = ib_cfg_set(key, val.c_str());
 		}

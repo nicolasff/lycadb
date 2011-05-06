@@ -82,11 +82,11 @@ NumParser::operator int() const {
 ////////////////////////////////////////////////////////////////////////////////
 
 CommandParser::CommandParser(Parser &parent)
-	: m_argc(0)
+	: state(ss_start)
+	, m_argc(0)
 	, m_argv(0)
 	, m_argvlen(0)
 	, m_parent(parent) {
-	reset();
 }
 
 void

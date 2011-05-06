@@ -48,7 +48,7 @@ Q & A
 * Q: Why was the Redis protocol used? A: I wanted to compare the two with the same tool, namely a modified `redis-benchmark`.
 * Q: What software license is LycaDB released under? A: GPL v2.
 * Q: Why not Tokyo Cabinet? A: I have no experience with it, and thought that the Redis data structures could be mapped to tables easily. I would be interested to see the same kind of project with Tokyo Cabinet.
-* Q: Is there even a use-case for LycaDB? A: I'm not sure. Maybe as a slave to a Redis master, accepting operations only on certain key patterns? Maybe as a separate store, dedicated to large amounts of persistent data?
+* Q: Is there even a use-case for LycaDB? A: I’m not sure. Maybe as a slave to a Redis master, accepting operations only on certain key patterns? Maybe as a separate store, dedicated to large amounts of persistent data?
 
 
 Compilation
@@ -66,16 +66,6 @@ I have tried to benchmark LycaDB using different workloads, and have seen variab
 
 I think it is important to compare similar systems: benchmarking writes to disk with LycaDB against writes to memory with Redis is not helpful, especially since LycaDB will keep accepting writes after the buffer pool is filled whereas Redis will start rejecting writes.
 
-Here are a few graphs, with no guarantees:
+10M writes (SET) followed by 10M reads (GET) in random order:
+![bench](http://i.imgur.com/EVcnv.png)
 
-10M writes (SET), in random order:
-=TODO=
-
-10M reads (GET), in random order:
-=TODO=
-
-10M writes (SET), in sequence:
-=TODO=
-
-10M reads (GET), in sequence:
-=TODO=

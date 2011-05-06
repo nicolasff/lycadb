@@ -1,11 +1,14 @@
 #include "config.h"
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 
 using namespace std;
 
 Config::Config() {
 
+	// default values
+	m_options["threads"] = "8";
 }
 
 void Config::read(string filename) {
@@ -52,4 +55,15 @@ Config::begin() const {
 Config::const_iterator
 Config::end() const {
 	return m_options.end();
+}
+
+template<>
+int
+Config::get<int>(string k) const {
+	map<string,string>::const_iterator vi;
+
+	if((vi = m_options.find(k)) == m_options.end()) {
+		return 1;
+	}
+	return ::atol(vi->second.c_str());
 }
