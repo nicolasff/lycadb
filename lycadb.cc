@@ -31,11 +31,10 @@ main() {
 	Store s("db0", cfg);
 	s.startup();
 	s.install();
+#if 1
 	Server srv("127.0.0.1", 1111, 8, s);
 	srv.start();
-
-	return 0;
-#if 0
+#else
 	cout << "Benchmarking, please wait." << endl;
 
 	// start with an empty table.
