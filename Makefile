@@ -1,5 +1,5 @@
 OUT=lycadb
-OBJS=lycadb.o store.o table.o kvtable.o settable.o protocol.o cmd.o net.o reply.o dispatcher.o str.o config.o
+OBJS=src/lycadb.o src/store.o src/table.o src/kvtable.o src/settable.o src/protocol.o src/cmd.o src/net.o src/reply.o src/dispatcher.o src/str.o src/config.o
 
 CFLAGS=-O3 -Wall -Wextra
 LDFLAGS=-levent -pthread -lhaildb
