@@ -10,7 +10,7 @@ Redis
 
 Historically, Redis has been able to persist data to disk in two ways:
 
-* By fork()ing the server and using the child process to dump the whole dataset to disk, periodically. This can consume a lot of RAM.
+* By fork()ing the server and using the child process to dump the whole dataset to disk, periodically. This can consume a lot of RAM but has the advantage to guarantee a point-in-time snapshot of the data.
 * By writing each command to a log file, which can be replayed on restart. In order to avoid ending up with a very large log file, it can be rewritten on demand by fork()ing the process or restarting the server.
 
 This usage of fork() makes Redis very simple but has the inconvenience of using [up to twice](http://en.wikipedia.org/wiki/Copy-on-write#Copy-on-write_in_virtual_memory) the amount of RAM as the process is duplicated entirely. This issue [has been discussed in the past](http://blog.kennejima.com/post/1226487020/thoughts-on-redis), and [acknowledged by the author of Redis](http://antirez.com/post/a-few-key-problems-in-redis-persistence.html).
