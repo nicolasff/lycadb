@@ -43,7 +43,7 @@ void Config::read(string filename) {
 		key.assign(l.begin(), l.begin() + sep);
 		val.assign(l.begin() + valpos, valend);
 
-		m_options.insert(make_pair(key, val));
+		m_options[key] = val; // replace existing value.
 	}
 
 }
