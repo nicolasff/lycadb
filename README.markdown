@@ -29,10 +29,12 @@ Introducing HailDB
 ==================
 
 HailDB is an updated version of Embedded InnoDB. InnoDB is currently the default storage engine for MySQL.  
-LycaDB uses the Redis protocol to expose a few commands and stores data directly in InnoDB tables. A single database is created, with only two tables:
+LycaDB uses the Redis protocol to expose a few commands and stores data directly in InnoDB tables. A single database is created, with four tables:
 
 * `main` contains key/value pairs (GET/SET/INCR...)
 * `sets` contains [sets](http://en.wikipedia.org/wiki/Set_\(mathematics\)) (SADD/SREM/SMEMBERS...)
+* `lists` contains head and tail pointers to list elements.
+* `lists-data` contains list elements, with prev/next pointers.
 
 
 Q & A
