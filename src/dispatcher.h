@@ -53,6 +53,7 @@ private:
 	Reply* srem(Command &cmd);
 
 	Reply* lpush(Command &cmd);
+	Reply* rpush(Command &cmd);
 	Reply* llen(Command &cmd);
 	Reply* lrange(Command &cmd);
 };

@@ -44,6 +44,7 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["SREM"] = CommandHandler(bind(&Dispatcher::srem, this, _1), 2, 2);
 
 	m_functions["LPUSH"] = CommandHandler(bind(&Dispatcher::lpush, this, _1), 2, 2);
+	m_functions["RPUSH"] = CommandHandler(bind(&Dispatcher::rpush, this, _1), 2, 2);
 	m_functions["LLEN"] = CommandHandler(bind(&Dispatcher::llen, this, _1), 1, 1);
 	m_functions["LRANGE"] = CommandHandler(bind(&Dispatcher::lrange, this, _1), 3, 3);
 }
@@ -177,6 +178,17 @@ Dispatcher::lpush(Command &cmd) {
 
 	int out;
 	if(m_store.lpush(cmd.argv(1), cmd.argv(2), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
+	}
+}
+
+Reply*
+Dispatcher::rpush(Command &cmd) {
+
+	int out;
+	if(m_store.rpush(cmd.argv(1), cmd.argv(2), out)) {
 		return new IntReply(out);
 	} else {
 		return 0;

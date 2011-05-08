@@ -301,7 +301,7 @@ ListHeadTable::lpush(str key, str val, int &out) {
 		get<ListHeadTable::KEY>(hrd).reset();
 	}
 
-	// insert row before the head that was found, or with next=0 otherwise.
+	// insert row before the head that was found, or with prev=next=0 otherwise.
 	do {
 		id = m_lists.insert_row(trx, val, 0, cur_head);
 	} while(!id);
@@ -317,6 +317,52 @@ ListHeadTable::lpush(str key, str val, int &out) {
 
 		// update key in order to point to the new head.
 		update_row(cursor, row, id, cur_tail, cur_count + 1);
+		out = cur_count + 1;
+	}
+
+	commit(trx, cursor, row);
+	return true;
+}
+
+bool
+ListHeadTable::rpush(str key, str val, int &out) {
+
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t id = 0, cur_head = 0, cur_tail = 0, cur_count = 0;
+	ListHeadTable::RowData hrd;
+	if(row != 0) {	// list exists, read head.
+		hrd = read(cursor);
+		cur_head = get<ListHeadTable::HEAD>(hrd);
+		cur_tail = get<ListHeadTable::TAIL>(hrd);
+		cur_count = get<ListHeadTable::COUNT>(hrd);
+
+		// cleanup
+		get<ListHeadTable::KEY>(hrd).reset();
+	}
+
+	// insert row after the tail that was found, or with prev=next=0 otherwise.
+	do {
+		id = m_lists.insert_row(trx, val, cur_tail, 0);
+	} while(!id);
+
+
+	if(row == 0) { // create new list
+		insert_row(cursor, key, id, id, 1);
+		out = 1;
+	} else {	// update list
+
+		// update tail, change its next pointer to the new id.
+		m_lists.update_row(trx, cur_tail, ListTable::NEXT, id);
+
+		// update key in order to point to the new tail.
+		update_row(cursor, row, cur_head, id, cur_count + 1);
 		out = cur_count + 1;
 	}
 

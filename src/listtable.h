@@ -37,6 +37,7 @@ public:
 	bool create();
 
 	bool lpush(str key, str val, int &out);
+	bool rpush(str key, str val, int &out);
 
 	void debug_dump(str key);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);
