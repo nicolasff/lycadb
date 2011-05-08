@@ -281,7 +281,6 @@ ListHeadTable::create_unique_index(ib_tbl_sch_t &schema) {
 bool
 ListHeadTable::lpush(str key, str val, int &out) {
 
-	ib_err_t err;
 	ib_trx_t trx;
 	ib_crsr_t cursor = 0;
 	ib_tpl_t row = 0;
@@ -290,14 +289,16 @@ ListHeadTable::lpush(str key, str val, int &out) {
 		return false;
 	}
 
-	uint64_t id = 0;
-	uint64_t cur_head = 0, cur_tail = 0, cur_count = 0;
+	uint64_t id = 0, cur_head = 0, cur_tail = 0, cur_count = 0;
+	ListHeadTable::RowData hrd;
 	if(row != 0) {	// list exists, read head.
+		hrd = read(cursor);
+		cur_head = get<ListHeadTable::HEAD>(hrd);
+		cur_tail = get<ListHeadTable::TAIL>(hrd);
+		cur_count = get<ListHeadTable::COUNT>(hrd);
 
-		// extract values
-		err = ib_tuple_read_u64(row, 1, &cur_head);
-		err = ib_tuple_read_u64(row, 2, &cur_tail);
-		err = ib_tuple_read_u64(row, 3, &cur_count);
+		// cleanup
+		get<ListHeadTable::KEY>(hrd).reset();
 	}
 
 	// insert row before the head that was found, or with next=0 otherwise.
