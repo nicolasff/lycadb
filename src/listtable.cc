@@ -98,6 +98,8 @@ ListTable::find_row(ib_trx_t trx, uint64_t id, ib_crsr_t &cursor) {
 	int pos = -1;
 	err = ib_cursor_moveto(cursor, search_row, IB_CUR_GE, &pos);
 
+	ib_tuple_delete(search_row);	// positioned, no need to keep the search tuple.
+
 	return true;
 }
 
@@ -155,7 +157,6 @@ ListTable::update_row(ib_trx_t trx, uint64_t id, int col_id, uint64_t val) {
 	ib_crsr_t cursor = 0;
 
 	if(!find_row(trx, id, cursor)) {
-		cout << "could not find row " << id << endl;
 		return false;
 	}
 
@@ -514,6 +515,10 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 
 	// read list meta-data
 	ListHeadTable::RowData hrd = read(cursor);
+
+	// cleanup
+	ib_tuple_delete(row);
+	get<ListHeadTable::KEY>(hrd).reset();
 	err = ib_cursor_close(cursor);
 	cursor = 0;
 
@@ -569,12 +574,17 @@ ListHeadTable::llen(str key, int &out) {
 		return true;
 	}
 
+
 	// read list meta-data
 	ListHeadTable::RowData hrd = read(cursor);
-	err = ib_cursor_close(cursor);
 
 	// retrieve number of elements
 	out = get<ListHeadTable::COUNT>(hrd);
+
+	// cleanup
+	err = ib_cursor_close(cursor);
+	get<ListHeadTable::KEY>(hrd).reset();
+	ib_tuple_delete(row);
 
 	err = ib_trx_rollback(trx);
 

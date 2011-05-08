@@ -106,6 +106,13 @@ SuccessReply::write(int fd) const {
 ListReply::ListReply() {
 }
 
+ListReply::~ListReply() {
+	vector<Reply*>::iterator ri;
+	for(ri = m_elements.begin(); ri != m_elements.end(); ri++) {
+		delete *ri;
+	}
+}
+
 void
 ListReply::add(Reply *r) {
 	m_elements.push_back(r);

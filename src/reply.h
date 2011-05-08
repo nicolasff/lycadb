@@ -73,6 +73,8 @@ public:
 class ListReply: public Reply {
 public:
 	ListReply();
+	~ListReply();
+
 	void add(Reply *r);
 	virtual bool write(int) const;
 
