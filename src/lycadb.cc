@@ -31,7 +31,7 @@ main() {
 	Store s("db0", cfg);
 	s.startup();
 	s.install();
-#if 0
+#if 1
 	Server srv("127.0.0.1", 1111, cfg.get<int>("threads"), s);
 	srv.start();
 #else

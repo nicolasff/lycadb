@@ -52,6 +52,9 @@ private:
 	Reply* sismember(Command &cmd);
 	Reply* srem(Command &cmd);
 
+	Reply* lpush(Command &cmd);
+	Reply* llen(Command &cmd);
+	Reply* lrange(Command &cmd);
 };
 
 

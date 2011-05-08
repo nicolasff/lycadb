@@ -42,6 +42,10 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["SMEMBERS"] = CommandHandler(bind(&Dispatcher::smembers, this, _1), 2, 2);
 	m_functions["SISMEMBER"] = CommandHandler(bind(&Dispatcher::sismember, this, _1), 2, 2);
 	m_functions["SREM"] = CommandHandler(bind(&Dispatcher::srem, this, _1), 2, 2);
+
+	m_functions["LPUSH"] = CommandHandler(bind(&Dispatcher::lpush, this, _1), 2, 2);
+	m_functions["LLEN"] = CommandHandler(bind(&Dispatcher::llen, this, _1), 1, 1);
+	m_functions["LRANGE"] = CommandHandler(bind(&Dispatcher::lrange, this, _1), 3, 3);
 }
 
 
@@ -165,5 +169,45 @@ Dispatcher::srem(Command &cmd) {
 		return new IntReply(1);
 	} else {
 		return new IntReply(0);
+	}
+}
+
+Reply*
+Dispatcher::lpush(Command &cmd) {
+
+	int out;
+	if(m_store.lpush(cmd.argv(1), cmd.argv(2), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
+	}
+}
+
+Reply*
+Dispatcher::llen(Command &cmd) {
+
+	int out;
+	if(m_store.llen(cmd.argv(1), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
+	}
+}
+
+Reply*
+Dispatcher::lrange(Command &cmd) {
+
+	vector<str> out;
+	if(m_store.lrange(cmd.argv(1),
+				::atol(cmd.argv(2).c_str()),
+				::atol(cmd.argv(3).c_str()),
+				out)) {
+		ListReply *r = new ListReply;
+		for(vector<str>::iterator i = out.begin(); i != out.end(); i++) {
+			r->add(new StringReply(*i));
+		}
+		return r;
+	} else {
+		return 0;
 	}
 }
