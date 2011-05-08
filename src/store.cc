@@ -9,7 +9,10 @@
 using namespace std;
 
 Store::Store(string db, Config &config) :
-	m_db(db), m_main(db + "/main"), m_sets(db + "/sets"),
+	m_db(db),
+	m_main(db + "/main"),
+	m_sets(db + "/sets"),
+	m_lists(db + "/lists"),
 	m_config(config) {
 }
 
@@ -60,7 +63,8 @@ Store::install() {
 
 	return this->createDb()
 		&& m_main.create()
-		&& m_sets.create();
+		&& m_sets.create()
+		&& m_lists.create();
 }
 
 bool

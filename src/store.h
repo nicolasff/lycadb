@@ -9,6 +9,7 @@
 
 #include "kvtable.h"
 #include "settable.h"
+#include "listtable.h"
 
 class Config;
 
@@ -47,6 +48,7 @@ private:
 	std::string m_db;
 	KVTable m_main;
 	SetTable m_sets;
+	ListHeadTable m_lists;
 
 	Config &m_config;
 };
