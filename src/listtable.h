@@ -41,6 +41,7 @@ public:
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);
 	bool lpop(str key, str &val);
+	bool rpop(str key, str &val);
 
 	void debug_dump(str key);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);

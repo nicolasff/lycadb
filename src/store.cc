@@ -145,7 +145,10 @@ Store::lpop(str key, str &val) {
 	return m_lists.lpop(key, val);
 }
 
-
+bool
+Store::rpop(str key, str &val) {
+	return m_lists.rpop(key, val);
+}
 
 void
 Store::ldump(str key) {

@@ -57,6 +57,7 @@ private:
 	Reply* llen(Command &cmd);
 	Reply* lrange(Command &cmd);
 	Reply* lpop(Command &cmd);
+	Reply* rpop(Command &cmd);
 };
 
 

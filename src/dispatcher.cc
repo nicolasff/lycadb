@@ -48,6 +48,7 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["LLEN"] = CommandHandler(bind(&Dispatcher::llen, this, _1), 1, 1);
 	m_functions["LRANGE"] = CommandHandler(bind(&Dispatcher::lrange, this, _1), 3, 3);
 	m_functions["LPOP"] = CommandHandler(bind(&Dispatcher::lpop, this, _1), 1, 1);
+	m_functions["RPOP"] = CommandHandler(bind(&Dispatcher::rpop, this, _1), 1, 1);
 }
 
 
@@ -230,6 +231,17 @@ Dispatcher::lpop(Command &cmd) {
 
 	str key(cmd.argv(1)), val;
 	if(m_store.lpop(key, val)) {
+		return new StringReply(val); // the reply object owns `val'.
+	} else {
+		return new EmptyReply();
+	}
+}
+
+Reply*
+Dispatcher::rpop(Command &cmd) {
+
+	str key(cmd.argv(1)), val;
+	if(m_store.rpop(key, val)) {
 		return new StringReply(val); // the reply object owns `val'.
 	} else {
 		return new EmptyReply();

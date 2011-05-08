@@ -433,7 +433,60 @@ ListHeadTable::lpop(str key, str &val) {
 	m_lists.delete_row(trx, cur_head);
 
 	// update key in order to point to the new head, update count.
-	if(new_head == 0) cur_tail = 0;
+	if(new_head == 0) new_tail = 0;
+	if(cur_count == 0) new_count = 0;
+	update_row(cursor, row, new_head, new_tail, new_count);
+
+	commit(trx, cursor, row);
+	return true;
+}
+
+bool
+ListHeadTable::rpop(str key, str &val) {
+
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_head = 0, cur_tail = 0, cur_count = 0;
+	ListHeadTable::RowData hrd;
+	if(row != 0) {	// list exists, read head.
+		hrd = read(cursor);
+		cur_head = get<ListHeadTable::HEAD>(hrd);
+		cur_tail = get<ListHeadTable::TAIL>(hrd);
+		cur_count = get<ListHeadTable::COUNT>(hrd);
+
+		// cleanup
+		get<ListHeadTable::KEY>(hrd).reset();
+	}
+
+
+	// read first row.
+	ib_crsr_t item_cursor;
+	if(!m_lists.find_row(trx, cur_tail, item_cursor)) {
+		rollback(trx, cursor, row);
+		return false;
+	}
+
+	// read data
+	ListTable::RowData rd = m_lists.read(item_cursor);
+	ib_err_t err = ib_cursor_close(item_cursor);
+	(void)err;
+	val = get<ListTable::VAL>(rd);
+	uint64_t new_tail = get<ListTable::PREV>(rd), new_head = cur_head, new_count = cur_count - 1;
+
+	// update new tail, next → 0
+	m_lists.update_row(trx, new_tail, ListTable::NEXT, 0);
+
+	// delete row.
+	m_lists.delete_row(trx, cur_tail);
+
+	// update key in order to point to the new tail, update count.
+	if(new_tail == 0) new_head = 0;
 	if(cur_count == 0) new_count = 0;
 	update_row(cursor, row, new_head, new_tail, new_count);
 
