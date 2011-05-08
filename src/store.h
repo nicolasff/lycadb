@@ -42,6 +42,7 @@ public:
 	bool rpush(str key, str val, int &out);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);
 	bool llen(str key, int &out);
+	bool lpop(str key, str &val);
 	void ldump(str key);
 
 	// deletion

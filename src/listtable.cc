@@ -190,6 +190,7 @@ ListTable::read(ib_crsr_t cursor) {
 	// read row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
 	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+		ib_tuple_delete(row);
 		return rd;
 	}
 
@@ -205,6 +206,23 @@ ListTable::read(ib_crsr_t cursor) {
 	ib_tuple_delete(row);
 
 	return rd;
+}
+
+bool
+ListTable::delete_row(ib_trx_t trx, uint64_t id) {
+
+	ib_err_t err;
+	ib_crsr_t cursor = 0;
+
+	// get table cursor
+	if(find_row(trx, id, cursor) == false) {
+		return false;
+	}
+
+	bool ret = ((err = ib_cursor_delete_row(cursor)) == DB_SUCCESS);
+	err = ib_cursor_close(cursor);
+
+	return ret;
 }
 
 
@@ -371,6 +389,59 @@ ListHeadTable::rpush(str key, str val, int &out) {
 }
 
 bool
+ListHeadTable::lpop(str key, str &val) {
+
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_head = 0, cur_tail = 0, cur_count = 0;
+	ListHeadTable::RowData hrd;
+	if(row != 0) {	// list exists, read head.
+		hrd = read(cursor);
+		cur_head = get<ListHeadTable::HEAD>(hrd);
+		cur_tail = get<ListHeadTable::TAIL>(hrd);
+		cur_count = get<ListHeadTable::COUNT>(hrd);
+
+		// cleanup
+		get<ListHeadTable::KEY>(hrd).reset();
+	}
+
+
+	// read first row.
+	ib_crsr_t item_cursor;
+	if(!m_lists.find_row(trx, cur_head, item_cursor)) {
+		rollback(trx, cursor, row);
+		return false;
+	}
+
+	// read data
+	ListTable::RowData rd = m_lists.read(item_cursor);
+	ib_err_t err = ib_cursor_close(item_cursor);
+	(void)err;
+	val = get<ListTable::VAL>(rd);
+	uint64_t new_head = get<ListTable::NEXT>(rd), new_tail = cur_tail, new_count = cur_count - 1;
+
+	// update new head, prev → 0
+	m_lists.update_row(trx, new_head, ListTable::PREV, 0);
+
+	// delete row.
+	m_lists.delete_row(trx, cur_head);
+
+	// update key in order to point to the new head, update count.
+	if(new_head == 0) cur_tail = 0;
+	if(cur_count == 0) new_count = 0;
+	update_row(cursor, row, new_head, new_tail, new_count);
+
+	commit(trx, cursor, row);
+	return true;
+}
+
+bool
 ListHeadTable::insert_row(ib_crsr_t cursor, str key, uint64_t head, uint64_t tail, uint64_t count) {
 
 	ib_err_t err;
@@ -495,6 +566,8 @@ ListHeadTable::debug_dump(str key) {
 	err = ib_cursor_close(cursor);
 	cursor = 0;
 
+	cout << "cur_head=" << cur_head << ", cur_tail=" << cur_tail << ", cur_count=" << cur_count << endl;
+
 	id = cur_head;
 	while(1) {
 
@@ -557,6 +630,7 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 	}
 
 	if(row == 0 || (stop != -1 && start > stop)) {	// no items
+		rollback(trx, cursor, row);
 		return true;
 	}
 
@@ -620,7 +694,6 @@ ListHeadTable::llen(str key, int &out) {
 		out = 0;
 		return true;
 	}
-
 
 	// read list meta-data
 	ListHeadTable::RowData hrd = read(cursor);

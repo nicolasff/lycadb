@@ -18,6 +18,8 @@ public:
 	bool update_row(ib_trx_t trx, uint64_t id,
 			int col_id, uint64_t val);
 
+	bool delete_row(ib_trx_t trx, uint64_t id);
+
 	static const int ID = 0;
 	static const int VAL = 1;
 	static const int PREV = 2;
@@ -38,6 +40,7 @@ public:
 
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);
+	bool lpop(str key, str &val);
 
 	void debug_dump(str key);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);

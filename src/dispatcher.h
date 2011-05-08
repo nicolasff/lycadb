@@ -56,6 +56,7 @@ private:
 	Reply* rpush(Command &cmd);
 	Reply* llen(Command &cmd);
 	Reply* lrange(Command &cmd);
+	Reply* lpop(Command &cmd);
 };
 
 

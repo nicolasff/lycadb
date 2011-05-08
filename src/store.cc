@@ -140,6 +140,13 @@ Store::llen(str key, int &out) {
 	return m_lists.llen(key, out);
 }
 
+bool
+Store::lpop(str key, str &val) {
+	return m_lists.lpop(key, val);
+}
+
+
+
 void
 Store::ldump(str key) {
 	m_lists.debug_dump(key);
