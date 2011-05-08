@@ -38,8 +38,8 @@ LycaDB uses the Redis protocol to expose a few commands and stores data directly
 Q & A
 =====
 
-* Q: Why wasn’t LycaDB added directly to Redis? A: The current implementation of *diskstore* serializes the whole key after each write. This is inefficient for operations such as [SADD](http://redis.io/commands/sadd), which can remain O(1) with a dedicated table. I also haven’t figured out a way to store lists efficiently, and I’m not sure if the licenses are compatible. My aim is not to replace Redis, but to work on a very simple project until I get it right.
-* Q: What commands have been implemented? A: GET, SET, DEL, INCR, DECR, SADD, SISMEMBER, SMEMBERS, SREM.
+* Q: Why wasn’t LycaDB added directly to Redis? A: The current implementation of *diskstore* serializes the whole key after each write. This is inefficient for operations such as [SADD](http://redis.io/commands/sadd), which can remain O(1) with a dedicated table. I’m also not sure if the licenses are compatible. My aim is not to replace Redis, but to work on a very simple project until I get it right.
+* Q: What commands have been implemented? A: GET, SET, DEL, INCR, DECR, SADD, SISMEMBER, SMEMBERS, SREM, LPUSH, RPUSH, LPOP, RPOP, LRANGE, LLEN.
 * Q: Why are so many types and commands missing? A: This is only a demo at this point.
 * Q: Is it possible to keep the amazing performance of Redis whilst storing data in HailDB? A: Probably not.
 * Q: Can LycaDB read .rdb files? .aof files? A: No and no.
