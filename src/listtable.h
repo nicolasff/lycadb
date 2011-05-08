@@ -18,6 +18,8 @@ public:
 	bool update_row(ib_trx_t trx, uint64_t id,
 			int col_id, uint64_t val);
 
+	static const int ID = 0;
+	static const int VAL = 1;
 	static const int PREV = 2;
 	static const int NEXT = 3;
 
@@ -44,6 +46,7 @@ public:
 	bool lpush(str key, str val, int &out);
 
 	void debug_dump(str key);
+	bool lrange(str key, int start, int stop, std::vector<str> &out);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
@@ -53,6 +56,14 @@ private:
 	bool update_row(ib_crsr_t cursor, ib_tpl_t row,
 			uint64_t head, uint64_t tail,
 			uint64_t count);
+
+	// row extraction
+	typedef std::tr1::tuple<str,uint64_t,uint64_t,uint64_t> RowData;
+	RowData read(ib_crsr_t cursor);
+	static const int KEY = 0;
+	static const int HEAD = 1;
+	static const int TAIL = 2;
+	static const int COUNT = 3;
 
 	ListTable m_lists;
 

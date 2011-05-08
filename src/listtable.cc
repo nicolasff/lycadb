@@ -9,6 +9,7 @@
 #include <cstdlib>	// srand, rand.
 
 using namespace std;
+using tr1::get;
 
 ListTable::ListTable(string name) : Table(name) {
 }
@@ -456,12 +457,97 @@ ListHeadTable::debug_dump(str key) {
 		// read row.
 		ListTable::RowData rd = m_lists.read(cursor);
 
-		cout << "(id=" << tr1::get<0>(rd) << ", val=[" << tr1::get<1>(rd).c_str() << "], prev=" << tr1::get<2>(rd) <<
-			", next=" << tr1::get<3>(rd) << ")" << endl;
+		cout << "(id=" << get<ListTable::ID>(rd)
+			<< ", val=[" << get<ListTable::VAL>(rd).c_str()
+			<< "], prev=" << get<ListTable::PREV>(rd)
+			<< ", next=" << get<ListTable::NEXT>(rd) << ")" << endl;
 
-		id = tr1::get<3>(rd);
+		id = get<ListTable::NEXT>(rd);
 		err = ib_cursor_close(cursor);
 	}
 
 	err = ib_trx_rollback(trx);
+}
+
+ListHeadTable::RowData
+ListHeadTable::read(ib_crsr_t cursor) {
+
+	ib_err_t err;
+
+	ListHeadTable::RowData rd;
+
+	// read row
+	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
+	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+		return rd;
+	}
+
+	// extract fields
+	uint64_t head = 0, tail = 0, count = 0;
+	str s((const char*)ib_col_get_value(row, 0), ib_col_get_len(row, 0), 1);
+	err = ib_tuple_read_u64(row, 1, &head);
+	err = ib_tuple_read_u64(row, 2, &tail);
+	err = ib_tuple_read_u64(row, 3, &count);
+
+	rd = tr1::make_tuple(s, head, tail, count);
+
+	ib_tuple_delete(row);
+
+	return rd;
+}
+
+bool
+ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
+
+	ib_err_t err;
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(start < 0 || get_cursor(key, trx, cursor, row) == false) {
+		return false;
+	}
+
+	if(row == 0 || (stop != -1 && start > stop)) {	// no items
+		return true;
+	}
+
+	// read list meta-data
+	ListHeadTable::RowData hrd = read(cursor);
+	err = ib_cursor_close(cursor);
+	cursor = 0;
+
+	// go through all items of the list.
+	uint64_t id = get<ListHeadTable::HEAD>(hrd);
+	int cur_pos = 0;
+	while(1) {
+
+		if(!id || !m_lists.find_row(trx, id, cursor)) {
+			break;
+		}
+
+		// read row.
+		ListTable::RowData rd = m_lists.read(cursor);
+		err = ib_cursor_close(cursor);
+
+		// advance id to the next row
+		id = get<ListTable::NEXT>(rd);
+
+		// when in interval, push data
+		if(cur_pos >= start && (stop == -1 || cur_pos <= stop)) {
+			out.push_back(get<ListTable::VAL>(rd));
+		} else { // cleanup otherwise.
+			get<ListTable::VAL>(rd).reset();
+		}
+
+		cur_pos++;
+
+		if(stop != -1 && cur_pos > stop) {	 // too far
+			break;
+		}
+	}
+
+	err = ib_trx_rollback(trx);
+
+	return false;
 }

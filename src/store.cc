@@ -124,6 +124,10 @@ bool
 Store::lpush(str key, str val, int &out) {
 	return m_lists.lpush(key, val, out);
 }
+bool
+Store::lrange(str key, int start, int stop, std::vector<str> &out) {
+	return m_lists.lrange(key, start, stop, out);
+}
 
 void
 Store::ldump(str key) {

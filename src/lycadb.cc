@@ -48,7 +48,14 @@ main() {
 		cout << s.lpush("x", str.c_str(), tmp) << endl;
 		cout << "len=" << tmp << endl;
 	}
-	s.ldump("x");
+	//s.ldump("x");
+	vector<str> vals;
+	s.lrange("x", 0, -1, vals);
+
+	cout << "vals.size() = " << vals.size() << endl;
+	for(vector<str>::iterator vi = vals.begin(); vi != vals.end(); vi++) {
+		cout << vi->c_str() << endl;
+	}
 
 	return 0;
 
