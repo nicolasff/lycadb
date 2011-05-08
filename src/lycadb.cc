@@ -49,6 +49,9 @@ main() {
 		cout << "len=" << tmp << endl;
 	}
 	//s.ldump("x");
+	int tmp;
+	s.llen("x", tmp);
+	cout << "LLEN: " << tmp << endl;
 	vector<str> vals;
 	s.lrange("x", 0, -1, vals);
 

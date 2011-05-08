@@ -40,6 +40,7 @@ public:
 	// lists
 	bool lpush(str key, str val, int &out);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);
+	bool llen(str key, int &out);
 	void ldump(str key);
 
 	// deletion

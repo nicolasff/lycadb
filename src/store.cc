@@ -129,6 +129,11 @@ Store::lrange(str key, int start, int stop, std::vector<str> &out) {
 	return m_lists.lrange(key, start, stop, out);
 }
 
+bool
+Store::llen(str key, int &out) {
+	return m_lists.llen(key, out);
+}
+
 void
 Store::ldump(str key) {
 	m_lists.debug_dump(key);

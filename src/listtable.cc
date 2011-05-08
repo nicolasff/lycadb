@@ -549,5 +549,34 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 
 	err = ib_trx_rollback(trx);
 
-	return false;
+	return true;
+}
+
+bool
+ListHeadTable::llen(str key, int &out) {
+
+	ib_err_t err;
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(get_cursor(key, trx, cursor, row) == false) {
+		return false;
+	}
+
+	if(row == 0) {	// no items
+		out = 0;
+		return true;
+	}
+
+	// read list meta-data
+	ListHeadTable::RowData hrd = read(cursor);
+	err = ib_cursor_close(cursor);
+
+	// retrieve number of elements
+	out = get<ListHeadTable::COUNT>(hrd);
+
+	err = ib_trx_rollback(trx);
+
+	return true;
 }

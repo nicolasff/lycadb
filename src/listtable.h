@@ -47,6 +47,7 @@ public:
 
 	void debug_dump(str key);
 	bool lrange(str key, int start, int stop, std::vector<str> &out);
+	bool llen(str key, int &out);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
