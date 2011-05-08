@@ -13,6 +13,13 @@ public:
 	uint64_t insert_row(ib_trx_t trx, str val,
 			uint64_t prev, uint64_t next);
 
+	bool find_row(ib_trx_t trx, uint64_t id, ib_crsr_t &cursor);
+	bool update_row(ib_trx_t trx, uint64_t id,
+			int col_id, uint64_t val);
+
+	static const int PREV = 2;
+	static const int NEXT = 3;
+
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 
@@ -32,6 +39,8 @@ public:
 
 	bool lpush(str key, str val, int &out);
 
+	void dump(str key);
+
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 	bool insert_row(ib_crsr_t cursor, str key,
@@ -43,11 +52,8 @@ private:
 
 	ListTable m_lists;
 
-	/*
 	bool
-	get_cursor(str &key, str &val,
-			ib_trx_t &trx, ib_crsr_t &cursor,
-			ib_tpl_t &row);
-	*/
+	get_cursor(str &key, ib_trx_t &trx,
+			ib_crsr_t &cursor, ib_tpl_t &row);
 };
 #endif

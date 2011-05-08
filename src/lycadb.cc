@@ -45,6 +45,7 @@ main() {
 		cout << s.lpush("x", "y", tmp) << endl;
 		cout << "len=" << tmp << endl;
 	}
+	s.ldump("x");
 
 	return 0;
 

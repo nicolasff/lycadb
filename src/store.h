@@ -39,6 +39,7 @@ public:
 
 	// lists
 	bool lpush(str key, str val, int &out);
+	void ldump(str key);
 
 	// deletion
 	bool del(str key);

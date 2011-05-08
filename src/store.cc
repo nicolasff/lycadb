@@ -125,6 +125,11 @@ Store::lpush(str key, str val, int &out) {
 	return m_lists.lpush(key, val, out);
 }
 
+void
+Store::ldump(str key) {
+	m_lists.dump(key);
+}
+
 bool
 Store::flushall() {
 	m_main.flushall();
