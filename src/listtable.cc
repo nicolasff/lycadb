@@ -179,6 +179,33 @@ ListTable::update_row(ib_trx_t trx, uint64_t id, int col_id, uint64_t val) {
 	return true;
 }
 
+ListTable::RowData
+ListTable::read(ib_crsr_t cursor) {
+	ib_err_t err;
+
+	ListTable::RowData rd;
+
+	// read row
+	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
+	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+		return rd;
+	}
+
+	// extract fields
+	uint64_t id = 0, prev = 0, next = 0;
+	err = ib_tuple_read_u64(row, 0, &id);
+	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
+	err = ib_tuple_read_u64(row, 2, &prev);
+	err = ib_tuple_read_u64(row, 3, &next);
+
+	rd = tr1::make_tuple(id, s, prev, next);
+
+	ib_tuple_delete(row);
+
+	return rd;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -396,7 +423,7 @@ ListHeadTable::get_cursor(str &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &
 }
 
 void
-ListHeadTable::dump(str key) {
+ListHeadTable::debug_dump(str key) {
 
 	ib_err_t err;
 	ib_trx_t trx;
@@ -427,19 +454,12 @@ ListHeadTable::dump(str key) {
 		}
 
 		// read row.
-		row = ib_clust_read_tuple_create(cursor);
-		if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
-			return;
-		}
+		ListTable::RowData rd = m_lists.read(cursor);
 
-		uint64_t cur_id = 0, cur_prev = 0, cur_next = 0;
-		err = ib_tuple_read_u64(row, 0, &cur_id);
-		err = ib_tuple_read_u64(row, 2, &cur_prev);
-		err = ib_tuple_read_u64(row, 3, &cur_next);
+		cout << "(id=" << tr1::get<0>(rd) << ", val=[" << tr1::get<1>(rd).c_str() << "], prev=" << tr1::get<2>(rd) <<
+			", next=" << tr1::get<3>(rd) << ")" << endl;
 
-		cout << "(id=" << cur_id << ", prev=" << cur_prev << ", next=" << cur_next << ")" << endl;
-
-		id = cur_next;
+		id = tr1::get<3>(rd);
 		err = ib_cursor_close(cursor);
 	}
 

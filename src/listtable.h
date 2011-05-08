@@ -3,6 +3,7 @@
 
 #include "table.h"
 #include <vector>
+#include <tr1/tuple>
 
 class ListTable : public Table {
 
@@ -20,6 +21,9 @@ public:
 	static const int PREV = 2;
 	static const int NEXT = 3;
 
+	typedef std::tr1::tuple<uint64_t,str,uint64_t,uint64_t> RowData;
+
+	RowData read(ib_crsr_t cursor);
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 
@@ -39,7 +43,7 @@ public:
 
 	bool lpush(str key, str val, int &out);
 
-	void dump(str key);
+	void debug_dump(str key);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);

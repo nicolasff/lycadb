@@ -42,7 +42,10 @@ main() {
 
 	for(int i = 0; i < 10; ++i) {
 		int tmp = 0;
-		cout << s.lpush("x", "y", tmp) << endl;
+		stringstream ss;
+		ss << "val-" << i;
+		string str = ss.str();
+		cout << s.lpush("x", str.c_str(), tmp) << endl;
 		cout << "len=" << tmp << endl;
 	}
 	s.ldump("x");

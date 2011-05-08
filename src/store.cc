@@ -127,7 +127,7 @@ Store::lpush(str key, str val, int &out) {
 
 void
 Store::ldump(str key) {
-	m_lists.dump(key);
+	m_lists.debug_dump(key);
 }
 
 bool
