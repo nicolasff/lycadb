@@ -31,7 +31,7 @@ main() {
 	Store s("db0", cfg);
 	s.startup();
 	s.install();
-#if 1
+#if 0
 	Server srv("127.0.0.1", 1111, cfg.get<int>("threads"), s);
 	srv.start();
 #else
@@ -39,6 +39,14 @@ main() {
 
 	// start with an empty table.
 	s.flushall();
+
+	for(int i = 0; i < 10; ++i) {
+		int tmp = 0;
+		cout << s.lpush("x", "y", tmp) << endl;
+		cout << "len=" << tmp << endl;
+	}
+
+	return 0;
 
 	// typedef for a key-value pair.
 	typedef pair<str,str> key_value_t;

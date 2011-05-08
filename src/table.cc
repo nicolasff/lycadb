@@ -121,7 +121,7 @@ Table::get_cursor(str key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
 		cerr << ib_strerror(err) << endl;
 	}
 
-	// create seach tuple, handling update case.
+	// create search tuple, handling update case.
 	search_row = ib_clust_search_tuple_create(cursor);
 
 	// set key column

@@ -37,6 +37,9 @@ public:
 	bool smembers(str key, std::vector<str> &out);
 	bool srem(str key, str val);
 
+	// lists
+	bool lpush(str key, str val, int &out);
+
 	// deletion
 	bool del(str key);
 	bool flushall();

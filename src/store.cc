@@ -121,6 +121,11 @@ Store::srem(str key, str val) {
 }
 
 bool
+Store::lpush(str key, str val, int &out) {
+	return m_lists.lpush(key, val, out);
+}
+
+bool
 Store::flushall() {
 	m_main.flushall();
 	m_sets.flushall();
