@@ -432,7 +432,7 @@ ListHeadTable::lpop(str key, str &val) {
 	uint64_t new_head = get<ListTable::NEXT>(rd), new_tail = cur_tail, new_count = cur_count - 1;
 
 	// update new head, prev → 0
-	m_lists.update_row(trx, new_head, ListTable::PREV, 0);
+	if(new_head) m_lists.update_row(trx, new_head, ListTable::PREV, 0);
 
 	// delete row.
 	m_lists.delete_row(trx, cur_head);
@@ -485,7 +485,7 @@ ListHeadTable::rpop(str key, str &val) {
 	uint64_t new_tail = get<ListTable::PREV>(rd), new_head = cur_head, new_count = cur_count - 1;
 
 	// update new tail, next → 0
-	m_lists.update_row(trx, new_tail, ListTable::NEXT, 0);
+	if(new_tail) m_lists.update_row(trx, new_tail, ListTable::NEXT, 0);
 
 	// delete row.
 	m_lists.delete_row(trx, cur_tail);
@@ -527,13 +527,17 @@ ListHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t head, uint64_
 
 	ib_err_t err;
 
+	if(count == 0) { // delete row.
+		return ((err = ib_cursor_delete_row(cursor)) == DB_SUCCESS);
+	}
+
 	// compare to new value
 	uint64_t cur_head, cur_tail, cur_count;
 	err = ib_tuple_read_u64(row, 1, &cur_head);
 	err = ib_tuple_read_u64(row, 2, &cur_tail);
 	err = ib_tuple_read_u64(row, 3, &cur_count);
 
-	if(cur_head == head && cur_tail == tail && cur_count == count) {
+	if(cur_head == head && cur_tail == tail && cur_count == count && count != 0) {
 		// same value!
 		return true;
 	}
