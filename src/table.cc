@@ -11,7 +11,6 @@ using namespace std;
 
 Table::Table(string name)
 	: m_name(name), m_tid(0) {
-
 }
 
 bool
@@ -40,6 +39,13 @@ Table::update_row(ib_crsr_t cursor, ib_tpl_t row, str val) {
 	// delete row object
 	ib_tuple_delete(new_row);
 	return true;
+}
+
+bool
+Table::load() {
+	m_tid = 0;
+	ib_err_t err = ib_table_get_id(m_name.c_str(), &m_tid);
+	return (err == DB_SUCCESS);
 }
 
 bool

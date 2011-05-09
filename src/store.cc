@@ -59,6 +59,14 @@ Store::shutdown() {
 }
 
 bool
+Store::load() {
+
+	return  m_main.load()
+		&& m_sets.load()
+		&& m_lists.load();
+}
+
+bool
 Store::install() {
 
 	return this->createDb()

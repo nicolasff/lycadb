@@ -30,7 +30,9 @@ main() {
 	cfg.read("lycadb.conf");
 	Store s("db0", cfg);
 	s.startup();
-	s.install();
+	if(!s.load()) {
+		s.install();
+	}
 #if 1
 	Server srv("127.0.0.1", 1111, cfg.get<int>("threads"), s);
 	srv.start();

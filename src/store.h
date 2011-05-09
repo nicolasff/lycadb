@@ -21,6 +21,7 @@ public:
 	bool startup();
 	bool shutdown();
 
+	bool load();
 	bool install();
 
 	// basic key management

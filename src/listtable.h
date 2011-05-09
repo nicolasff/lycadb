@@ -38,6 +38,8 @@ public:
 	ListHeadTable(std::string name);
 	bool create();
 
+	virtual bool load();
+
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);
 	bool lpop(str key, str &val);

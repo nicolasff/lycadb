@@ -12,6 +12,7 @@ public:
 	Table(std::string name);
 
 	virtual bool create() = 0;
+	virtual bool load();
 
 	// deletion
 	virtual bool del(str key);

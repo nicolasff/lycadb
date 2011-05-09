@@ -234,6 +234,11 @@ ListHeadTable::ListHeadTable(string name) : Table(name), m_lists(name + "-data")
 }
 
 bool
+ListHeadTable::load() {
+	return Table::load() && m_lists.load();
+}
+
+bool
 ListHeadTable::create() {
 
 	ib_err_t err;
