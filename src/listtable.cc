@@ -678,11 +678,15 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 	ib_crsr_t cursor = 0;
 	ib_tpl_t row = 0;
 
-	if(start < 0 || get_cursor(key, trx, cursor, row) == false) {
+	if(start < 0) {
 		return false;
 	}
 
-	if(row == 0 || (stop != -1 && start > stop)) {	// no items
+	if(get_cursor(key, trx, cursor, row) == false) {
+		return true;	// no list → empty list.
+	}
+
+	if(row == 0) {	// no items
 		rollback(trx, cursor, row);
 		return true;
 	}
@@ -698,6 +702,15 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 
 	// go through all items of the list.
 	uint64_t id = get<ListHeadTable::HEAD>(hrd);
+	uint64_t count = get<ListHeadTable::COUNT>(hrd);
+
+	if(stop < 0) stop += count;
+
+	if(stop < start) {	// no items
+		rollback(trx, 0, 0);
+		return true;
+	}
+
 	int cur_pos = 0;
 	while(1) {
 
@@ -721,7 +734,7 @@ ListHeadTable::lrange(str key, int start, int stop, vector<str> &out) {
 
 		cur_pos++;
 
-		if(stop != -1 && cur_pos > stop) {	 // too far
+		if(cur_pos > stop) {	 // too far
 			break;
 		}
 	}
