@@ -19,7 +19,7 @@ In order to use datasets larger than the available RAM, several options are now 
 
 * Shard the data and use several instances, this is what most people seem to do.
 * Use the [Virtual Memory (VM)](http://antirez.com/post/redis-virtual-memory-story.html): Let Redis swap cold keys on disk, whilst keeping the hottest keys in a fixed-size buffer in RAM. The idea behind this implementation is that Redis knows better than the OS which pages can be swapped. Using the VM is now recommended against.
-* Use the *diskstore* mechanism: Each key is hashed, and stored in a single file. Because of the lack of a replay log, [MULTI/EXEC transactions](http://redis.io/topics/transactions) and operations on multiple keys are no longer atomic. My main issue with *diskstore* is the way keys are saved: each key is completely serialized before being written to its file and O(1) operations such as SADD (adding an element to a set) become O(n) as *the whole set* is rewritten to disk.
+* Use the *diskstore* mechanism: <del>Each key is hashed, and stored in a single file. Because of the lack of a replay log, [MULTI/EXEC transactions](http://redis.io/topics/transactions) and operations on multiple keys are no longer atomic. My main issue with *diskstore* is the way keys are saved: each key is completely serialized before being written to its file and O(1) operations such as SADD (adding an element to a set) become O(n) as *the whole set* is rewritten to disk.</del>. Update: [*diskstore* has been removed](https://github.com/antirez/redis/commit/c9d0c3623a7714bd41a35237f4ba927206a7adb6).
 * Use a B-tree, [currently in the making](https://github.com/antirez/otree); this is not yet usable.
 
 
