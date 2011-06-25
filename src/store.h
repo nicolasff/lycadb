@@ -10,6 +10,7 @@
 #include "kvtable.h"
 #include "settable.h"
 #include "listtable.h"
+#include "zsettable.h"
 
 class Config;
 
@@ -59,6 +60,7 @@ private:
 	KVTable m_main;
 	SetTable m_sets;
 	ListHeadTable m_lists;
+	ZSetHeadTable m_zsets;
 
 	Config &m_config;
 };

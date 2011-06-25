@@ -13,6 +13,7 @@ Store::Store(string db, Config &config) :
 	m_main(db + "/main"),
 	m_sets(db + "/sets"),
 	m_lists(db + "/lists"),
+	m_zsets(db + "/zsets"),
 	m_config(config) {
 }
 
@@ -63,7 +64,8 @@ Store::load() {
 
 	return  m_main.load()
 		&& m_sets.load()
-		&& m_lists.load();
+		&& m_lists.load()
+		&& m_zsets.load();
 }
 
 bool
@@ -72,7 +74,8 @@ Store::install() {
 	return this->createDb()
 		&& m_main.create()
 		&& m_sets.create()
-		&& m_lists.create();
+		&& m_lists.create()
+		&& m_zsets.create();
 }
 
 bool
