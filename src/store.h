@@ -49,7 +49,7 @@ public:
 	void ldump(str key);
 
 	// zsets
-	bool zadd(str key, str val, double score);
+	bool zadd(str key, double score, str val, int &out);
 	bool zcard(str key, int &out);
 
 	// deletion

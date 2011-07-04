@@ -167,9 +167,9 @@ Store::ldump(str key) {
 }
 
 bool
-Store::zadd(str key, str val, double score)
+Store::zadd(str key, double score, str val, int &out)
 {
-	return m_zsets.zadd(key, val, score);
+	return m_zsets.zadd(key, score, val, out);
 }
 
 bool

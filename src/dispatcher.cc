@@ -256,11 +256,12 @@ Dispatcher::rpop(Command &cmd) {
 Reply*
 Dispatcher::zadd(Command &cmd)
 {
-	if(m_store.zadd(cmd.argv(1), cmd.argv(2),
-				::atof(cmd.argv(3).c_str()))) {
-		return new IntReply(1);
+	int out;
+	if(m_store.zadd(cmd.argv(1), ::atof(cmd.argv(2).c_str()),
+				cmd.argv(3), out)) {
+		return new IntReply(out);
 	} else {
-		return new IntReply(0);
+		return 0;
 	}
 }
 

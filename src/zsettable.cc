@@ -322,7 +322,7 @@ ZSetHeadTable::zcard(str key, int &out) {
 }
 
 bool
-ZSetHeadTable::zadd(str key, str val, double score) {
+ZSetHeadTable::zadd(str key, double score, str val, int &out) {
 
 	ib_trx_t trx;
 	ib_crsr_t cursor = 0;
@@ -360,15 +360,18 @@ ZSetHeadTable::zadd(str key, str val, double score) {
 
 			// increase zcard if there was data.
 			if(row) {
+				out = cur_count + 1;
 				update_row(cursor, row, cur_count + 1);
 			}
 
 			commit(trx, cursor, row);
 			return true;
 		} else {
-			// FAIL
+			rollback(trx, cursor, row);
+			return false;
 		}
 	} else {
+		out = cur_count;
 		ib_err_t err = ib_cursor_close(data_cursor);
 		(void)err;
 		// value already exists.
@@ -376,7 +379,7 @@ ZSetHeadTable::zadd(str key, str val, double score) {
 	
 	// default
 	rollback(trx, cursor, row);
-	return false;
+	return true;
 }
 
 /*

@@ -37,7 +37,7 @@ public:
 	virtual bool load();
 
 	bool zcard(str key, int &out);
-	bool zadd(str key, str val, double score);
+	bool zadd(str key, double score, str val, int &out);
 	/*
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);
