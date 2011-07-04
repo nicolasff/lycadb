@@ -36,7 +36,7 @@ ZSetTable::create() {
 	}
 
 	// add `score` column as FLOAT (8 bytes)
-	if((err = ib_table_schema_add_col(schema, "score", IB_FLOAT, IB_COL_NOT_NULL, 0, 8)) != DB_SUCCESS) {
+	if((err = ib_table_schema_add_col(schema, "score", IB_FLOAT, IB_COL_NONE, 0, sizeof(float))) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -77,9 +77,8 @@ ZSetTable::create_unique_index(ib_tbl_sch_t &schema) {
 	return true;
 }
 
-/*
 bool
-ListTable::find_row(ib_trx_t trx, uint64_t id, ib_crsr_t &cursor) {
+ZSetTable::find_row(ib_trx_t trx, uint64_t id, str &val, ib_crsr_t &cursor) {
 
 	ib_err_t err;
 
@@ -92,8 +91,8 @@ ListTable::find_row(ib_trx_t trx, uint64_t id, ib_crsr_t &cursor) {
 	// create search tuple, handling update case.
 	ib_tpl_t search_row = ib_clust_search_tuple_create(cursor);
 
-	// set id column
-	err = ib_tuple_write_u64(search_row, 0, id);
+	err = ib_tuple_write_u64(search_row, 0, id); // set id column
+	err = ib_col_set_value(search_row, 1, val.c_str(), val.size()); // set val column
 
 	// look for existing key
 	int pos = -1;
@@ -101,31 +100,33 @@ ListTable::find_row(ib_trx_t trx, uint64_t id, ib_crsr_t &cursor) {
 
 	ib_tuple_delete(search_row);	// positioned, no need to keep the search tuple.
 
+	if((err != DB_SUCCESS && err != DB_END_OF_INDEX) || pos != 0) {
+		return false;	// row doesn't exist.
+	}
+
+	// cursor is positioned.
 	return true;
 }
 
-uint64_t
-ListTable::insert_row(ib_trx_t trx, str val, uint64_t prev, uint64_t next) {
+bool
+ZSetTable::insert_row(ib_trx_t trx, uint64_t id, str val, double score) {
 
 	ib_err_t err;
 
 	// open cursor
 	ib_crsr_t cursor = 0;
 	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
-		cerr << ib_strerror(err) << endl;
+		cerr << __FILE__ << ":" << __LINE__ << ": " << ib_strerror(err) << endl;
+		return false;
 	}
 
 	// create row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
 
-	// generate row id
-	uint64_t id = ((uint64_t)rand() << 32) + (uint64_t)rand();
-
 	// set id, val, prev, next columns
 	err = ib_tuple_write_u64(row, 0, id);
 	err = ib_col_set_value(row, 1, val.c_str(), val.size());
-	err = ib_tuple_write_u64(row, 2, prev);
-	err = ib_tuple_write_u64(row, 3, next);
+	err = ib_tuple_write_double(row, 2, score);
 
 	// insert row
 	bool ret = (ib_cursor_insert_row(cursor, row) == DB_SUCCESS);
@@ -137,20 +138,12 @@ ListTable::insert_row(ib_trx_t trx, str val, uint64_t prev, uint64_t next) {
 	err = ib_cursor_close(cursor);
 
 	// failure
-	if(!ret) return 0;
+	if(!ret) return false;
 
-	// look for prev and next, update them to point to the new row.
-	if(prev) { // update prev→next
-		update_row(trx, prev, ListTable::NEXT, id);
-	}
-
-	if(next) { // update next→prev
-		update_row(trx, next, ListTable::PREV, id);
-	}
-
-	return id;
+	return true;
 }
 
+/*
 bool
 ListTable::update_row(ib_trx_t trx, uint64_t id, int col_id, uint64_t val) {
 
@@ -331,7 +324,58 @@ ZSetHeadTable::zcard(str key, int &out) {
 bool
 ZSetHeadTable::zadd(str key, str val, double score) {
 
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
 
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_id = 0, cur_count = 0;
+	ZSetHeadTable::RowData hrd;
+	if(row == 0) {	// list doesn't exist, create head.
+		
+		// insert head.
+		do {
+		} while(!insert_row(cursor, key, cur_id, 1));
+
+	} else {
+		hrd = read(cursor);
+		cur_id = get<ZSetHeadTable::ID>(hrd);
+		cur_count = get<ZSetHeadTable::COUNT>(hrd);
+
+		// cleanup
+		get<ZSetHeadTable::KEY>(hrd).reset();
+	}
+
+	// look for row in data table
+	ib_crsr_t data_cursor;
+	if(!m_zsets.find_row(trx, cur_id, val, data_cursor)) {
+		ib_err_t err = ib_cursor_close(data_cursor);
+		(void)err;
+
+		// insert data row
+		if(m_zsets.insert_row(trx, cur_id, val, score)) {
+
+			// increase zcard if there was data.
+			if(row) {
+				update_row(cursor, row, cur_count + 1);
+			}
+
+			commit(trx, cursor, row);
+			return true;
+		} else {
+			// FAIL
+		}
+	} else {
+		ib_err_t err = ib_cursor_close(data_cursor);
+		(void)err;
+		// value already exists.
+	}
+	
+	// default
+	rollback(trx, cursor, row);
 	return false;
 }
 
@@ -533,20 +577,23 @@ ListHeadTable::rpop(str key, str &val) {
 	commit(trx, cursor, row);
 	return true;
 }
+*/
 
 bool
-ListHeadTable::insert_row(ib_crsr_t cursor, str key, uint64_t head, uint64_t tail, uint64_t count) {
+ZSetHeadTable::insert_row(ib_crsr_t cursor, str key, uint64_t &id, uint64_t card) {
 
 	ib_err_t err;
 
 	// create row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
 
+	// generate row id
+	id = ((uint64_t)rand() << 32) + (uint64_t)rand();
+
 	// set key, head, tail, count columns
 	err = ib_col_set_value(row, 0, key.c_str(), key.size());
-	err = ib_tuple_write_u64(row, 1, head);
-	err = ib_tuple_write_u64(row, 2, tail);
-	err = ib_tuple_write_u64(row, 3, count);
+	err = ib_tuple_write_u64(row, 1, id);
+	err = ib_tuple_write_u64(row, 2, card); // cardinality
 
 	// insert row
 	bool ret = (ib_cursor_insert_row(cursor, row) == DB_SUCCESS);
@@ -558,7 +605,7 @@ ListHeadTable::insert_row(ib_crsr_t cursor, str key, uint64_t head, uint64_t tai
 }
 
 bool
-ListHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t head, uint64_t tail, uint64_t count) {
+ZSetHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t count) {
 
 	ib_err_t err;
 
@@ -567,12 +614,10 @@ ListHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t head, uint64_
 	}
 
 	// compare to new value
-	uint64_t cur_head, cur_tail, cur_count;
-	err = ib_tuple_read_u64(row, 1, &cur_head);
-	err = ib_tuple_read_u64(row, 2, &cur_tail);
-	err = ib_tuple_read_u64(row, 3, &cur_count);
+	uint64_t cur_count;
+	err = ib_tuple_read_u64(row, 2, &cur_count);
 
-	if(cur_head == head && cur_tail == tail && cur_count == count && count != 0) {
+	if(cur_count == count && count != 0) {
 		// same value!
 		return true;
 	}
@@ -580,9 +625,7 @@ ListHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t head, uint64_
 	// update values
 	ib_tpl_t new_row = ib_clust_read_tuple_create(cursor);
 	err = ib_tuple_copy(new_row, row);
-	err = ib_tuple_write_u64(new_row, 1, head);
-	err = ib_tuple_write_u64(new_row, 2, tail);
-	err = ib_tuple_write_u64(new_row, 3, count);
+	err = ib_tuple_write_u64(new_row, 2, count);
 
 	// insert new value in place.
 	if((err = ib_cursor_update_row(cursor, row, new_row)) != DB_SUCCESS) {
@@ -594,8 +637,6 @@ ListHeadTable::update_row(ib_crsr_t cursor, ib_tpl_t row, uint64_t head, uint64_
 	ib_tuple_delete(new_row);
 	return true;
 }
-*/
-
 bool
 ZSetHeadTable::get_cursor(str &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &row) {
 
@@ -639,6 +680,7 @@ ZSetHeadTable::get_cursor(str &key, ib_trx_t &trx, ib_crsr_t &cursor, ib_tpl_t &
 
 	return true;
 }
+
 /*
 void
 ListHeadTable::debug_dump(str key) {

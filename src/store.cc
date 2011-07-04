@@ -167,6 +167,18 @@ Store::ldump(str key) {
 }
 
 bool
+Store::zadd(str key, str val, double score)
+{
+	return m_zsets.zadd(key, val, score);
+}
+
+bool
+Store::zcard(str key, int &out)
+{
+	return m_zsets.zcard(key, out);
+}
+
+bool
 Store::flushall() {
 	m_main.flushall();
 	m_sets.flushall();

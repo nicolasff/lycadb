@@ -48,6 +48,10 @@ public:
 	bool rpop(str key, str &val);
 	void ldump(str key);
 
+	// zsets
+	bool zadd(str key, str val, double score);
+	bool zcard(str key, int &out);
+
 	// deletion
 	bool del(str key);
 	bool flushall();

@@ -58,6 +58,9 @@ private:
 	Reply* lrange(Command &cmd);
 	Reply* lpop(Command &cmd);
 	Reply* rpop(Command &cmd);
+
+	Reply* zadd(Command &cmd);
+	Reply* zcard(Command &cmd);
 };
 
 

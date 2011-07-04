@@ -49,6 +49,9 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["LRANGE"] = CommandHandler(bind(&Dispatcher::lrange, this, _1), 3, 3);
 	m_functions["LPOP"] = CommandHandler(bind(&Dispatcher::lpop, this, _1), 1, 1);
 	m_functions["RPOP"] = CommandHandler(bind(&Dispatcher::rpop, this, _1), 1, 1);
+
+	m_functions["ZADD"] = CommandHandler(bind(&Dispatcher::zadd, this, _1), 3, 3);
+	m_functions["ZCARD"] = CommandHandler(bind(&Dispatcher::zcard, this, _1), 1, 1);
 }
 
 
@@ -245,5 +248,29 @@ Dispatcher::rpop(Command &cmd) {
 		return new StringReply(val); // the reply object owns `val'.
 	} else {
 		return new EmptyReply();
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Reply*
+Dispatcher::zadd(Command &cmd)
+{
+	if(m_store.zadd(cmd.argv(1), cmd.argv(2),
+				::atof(cmd.argv(3).c_str()))) {
+		return new IntReply(1);
+	} else {
+		return new IntReply(0);
+	}
+}
+
+Reply*
+Dispatcher::zcard(Command &cmd)
+{
+	int out;
+	if(m_store.zcard(cmd.argv(1), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
 	}
 }
