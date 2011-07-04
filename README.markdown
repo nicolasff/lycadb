@@ -29,19 +29,21 @@ Introducing HailDB
 ==================
 
 HailDB is an updated version of Embedded InnoDB. InnoDB is currently the default storage engine for MySQL.  
-LycaDB uses the Redis protocol to expose a few commands and stores data directly in InnoDB tables. A single database is created, with four tables:
+LycaDB uses the Redis protocol to expose a few commands and stores data directly in InnoDB tables. A single database is created, with six tables:
 
 * `main` contains key/value pairs (GET/SET/INCR...)
 * `sets` contains [sets](http://en.wikipedia.org/wiki/Set_\(mathematics\)) (SADD/SREM/SMEMBERS...)
 * `lists` contains head and tail pointers to list elements.
 * `lists-data` contains list elements, with prev/next pointers.
+* `zsets` contains zset unique IDs and cardinalities.
+* `zsets-data` contains zset elements, with values and scores.
 
 
 Q & A
 =====
 
 * Q: Why wasn’t LycaDB added directly to Redis? A: The current implementation of *diskstore* serializes the whole key after each write. This is inefficient for operations such as [SADD](http://redis.io/commands/sadd), which can remain O(1) with a dedicated table. I’m also not sure if the licenses are compatible. My aim is not to replace Redis, but to work on a very simple project until I get it right.
-* Q: What commands have been implemented? A: GET, SET, DEL, INCR, DECR, SADD, SISMEMBER, SMEMBERS, SREM, LPUSH, RPUSH, LPOP, RPOP, LRANGE, LLEN.
+* Q: What commands have been implemented? A: GET, SET, DEL, INCR, DECR, SADD, SISMEMBER, SMEMBERS, SREM, LPUSH, RPUSH, LPOP, RPOP, LRANGE, LLEN, ZADD, ZCARD, ZREM.
 * Q: Why are so many types and commands missing? A: This is only a demo at this point.
 * Q: Is it possible to keep the amazing performance of Redis whilst storing data in HailDB? A: Probably not.
 * Q: Can LycaDB read .rdb files? .aof files? A: No and no.
