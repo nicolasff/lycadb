@@ -179,6 +179,12 @@ Store::zcard(str key, int &out)
 }
 
 bool
+Store::zrem(str key, str val, int &out)
+{
+	return m_zsets.zrem(key, val, out);
+}
+
+bool
 Store::flushall() {
 	m_main.flushall();
 	m_sets.flushall();

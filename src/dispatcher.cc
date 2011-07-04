@@ -52,6 +52,7 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 
 	m_functions["ZADD"] = CommandHandler(bind(&Dispatcher::zadd, this, _1), 3, 3);
 	m_functions["ZCARD"] = CommandHandler(bind(&Dispatcher::zcard, this, _1), 1, 1);
+	m_functions["ZREM"] = CommandHandler(bind(&Dispatcher::zrem, this, _1), 2, 2);
 }
 
 
@@ -270,6 +271,17 @@ Dispatcher::zcard(Command &cmd)
 {
 	int out;
 	if(m_store.zcard(cmd.argv(1), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
+	}
+}
+
+Reply*
+Dispatcher::zrem(Command &cmd)
+{
+	int out;
+	if(m_store.zrem(cmd.argv(1), cmd.argv(2), out)) {
 		return new IntReply(out);
 	} else {
 		return 0;

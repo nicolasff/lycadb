@@ -18,8 +18,8 @@ public:
 	bool update_row(ib_trx_t trx, uint64_t id,
 			int col_id, uint64_t val);
 
-	bool delete_row(ib_trx_t trx, uint64_t id);
 	*/
+	bool delete_row(ib_crsr_t cursor);
 
 	//typedef std::tr1::tuple<uint64_t,str,uint64_t,uint64_t> RowData;
 
@@ -38,6 +38,7 @@ public:
 
 	bool zcard(str key, int &out);
 	bool zadd(str key, double score, str val, int &out);
+	bool zrem(str key, str val, int &out);
 	/*
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);

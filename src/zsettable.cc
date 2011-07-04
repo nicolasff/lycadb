@@ -202,23 +202,17 @@ ListTable::read(ib_crsr_t cursor) {
 	return rd;
 }
 
+*/
 bool
-ListTable::delete_row(ib_trx_t trx, uint64_t id) {
+ZSetTable::delete_row(ib_crsr_t cursor) {
 
 	ib_err_t err;
-	ib_crsr_t cursor = 0;
-
-	// get table cursor
-	if(find_row(trx, id, cursor) == false) {
-		return false;
-	}
 
 	bool ret = ((err = ib_cursor_delete_row(cursor)) == DB_SUCCESS);
 	err = ib_cursor_close(cursor);
 
 	return ret;
 }
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -334,8 +328,8 @@ ZSetHeadTable::zadd(str key, double score, str val, int &out) {
 
 	uint64_t cur_id = 0, cur_count = 0;
 	ZSetHeadTable::RowData hrd;
-	if(row == 0) {	// list doesn't exist, create head.
-		
+	if(row == 0) {	// zset doesn't exist, create head.
+
 		// insert head.
 		do {
 		} while(!insert_row(cursor, key, cur_id, 1));
@@ -360,10 +354,9 @@ ZSetHeadTable::zadd(str key, double score, str val, int &out) {
 
 			// increase zcard if there was data.
 			if(row) {
-				out = cur_count + 1;
 				update_row(cursor, row, cur_count + 1);
 			}
-
+			out = 1;
 			commit(trx, cursor, row);
 			return true;
 		} else {
@@ -371,14 +364,69 @@ ZSetHeadTable::zadd(str key, double score, str val, int &out) {
 			return false;
 		}
 	} else {
-		out = cur_count;
+		out = 0;
 		ib_err_t err = ib_cursor_close(data_cursor);
 		(void)err;
 		// value already exists.
 	}
-	
+
 	// default
 	rollback(trx, cursor, row);
+	return true;
+}
+
+bool
+ZSetHeadTable::zrem(str key, str val, int &out) {
+
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_id = 0, cur_count = 0;
+	ZSetHeadTable::RowData hrd;
+	if(row == 0) {	// zset doesn't exist, return 0.
+		rollback(trx, cursor, row);
+		out = 0;
+		return true;
+	} else {
+		hrd = read(cursor);
+
+		cur_id = get<ZSetHeadTable::ID>(hrd);
+		cur_count = get<ZSetHeadTable::COUNT>(hrd);
+
+		// cleanup
+		get<ZSetHeadTable::KEY>(hrd).reset();
+	}
+
+	// look for row in data table
+	ib_crsr_t data_cursor;
+	if(!m_zsets.find_row(trx, cur_id, val, data_cursor)) {
+
+		// no such element, delete data cursor
+		ib_err_t err = ib_cursor_close(data_cursor);
+		(void)err;
+
+		rollback(trx, cursor, row);
+		out = 0;
+		return true;
+	}
+
+	// remove element
+	if(!m_zsets.delete_row(data_cursor)) {
+		rollback(trx, cursor, row);	// error, failed to delete element.
+		return false;
+	}
+
+	// update zcard
+	update_row(cursor, row, cur_count - 1);
+
+	// done.
+	out = 1;
+	commit(trx, cursor, row);
 	return true;
 }
 
