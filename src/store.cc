@@ -167,21 +167,23 @@ Store::ldump(str key) {
 }
 
 bool
-Store::zadd(str key, double score, str val, int &out)
-{
+Store::zadd(str key, double score, str val, int &out) {
 	return m_zsets.zadd(key, score, val, out);
 }
 
 bool
-Store::zcard(str key, int &out)
-{
+Store::zcard(str key, int &out) {
 	return m_zsets.zcard(key, out);
 }
 
 bool
-Store::zrem(str key, str val, int &out)
-{
+Store::zrem(str key, str val, int &out) {
 	return m_zsets.zrem(key, val, out);
+}
+
+bool
+Store::zscore(str key, str val, double &out, bool &found) {
+	return m_zsets.zscore(key, val, out, found);
 }
 
 bool

@@ -174,12 +174,13 @@ ListTable::update_row(ib_trx_t trx, uint64_t id, int col_id, uint64_t val) {
 
 	return true;
 }
+*/
 
-ListTable::RowData
-ListTable::read(ib_crsr_t cursor) {
+ZSetTable::RowData
+ZSetTable::read(ib_crsr_t cursor) {
 	ib_err_t err;
 
-	ListTable::RowData rd;
+	ZSetTable::RowData rd;
 
 	// read row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
@@ -189,20 +190,19 @@ ListTable::read(ib_crsr_t cursor) {
 	}
 
 	// extract fields
-	uint64_t id = 0, prev = 0, next = 0;
+	uint64_t id = 0;
+	double score;
 	err = ib_tuple_read_u64(row, 0, &id);
 	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
-	err = ib_tuple_read_u64(row, 2, &prev);
-	err = ib_tuple_read_u64(row, 3, &next);
+	err = ib_tuple_read_double(row, 2, &score);
 
-	rd = tr1::make_tuple(id, s, prev, next);
+	rd = tr1::make_tuple(id, s, score);
 
 	ib_tuple_delete(row);
 
 	return rd;
 }
 
-*/
 bool
 ZSetTable::delete_row(ib_crsr_t cursor) {
 
@@ -427,6 +427,58 @@ ZSetHeadTable::zrem(str key, str val, int &out) {
 	// done.
 	out = 1;
 	commit(trx, cursor, row);
+	return true;
+}
+
+bool ZSetHeadTable::zscore(str key, str val, double &out, bool &found) {
+	
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+	ib_err_t err;
+
+	// no output value so far.
+	found = false;
+
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_id = 0;
+	ZSetHeadTable::RowData hrd;
+	if(row == 0) {	// zset doesn't exist, return 0.
+		rollback(trx, cursor, row);
+		found = false;
+		return true;
+	} else {
+		hrd = read(cursor);
+		cur_id = get<ZSetHeadTable::ID>(hrd);
+		get<ZSetHeadTable::KEY>(hrd).reset(); // cleanup
+	}
+
+	// look for row in data table
+	ib_crsr_t data_cursor;
+	if(!m_zsets.find_row(trx, cur_id, val, data_cursor)) {
+
+		// no such element, delete data cursor
+		err = ib_cursor_close(data_cursor);
+		(void)err;
+
+		rollback(trx, cursor, row);
+		return true;
+	} 
+	
+	// found, read row.
+	found = true;
+	ZSetTable::RowData rd = m_zsets.read(data_cursor);
+	out = get<ZSetTable::SCORE>(rd); // set out val
+	get<ZSetTable::VAL>(rd).reset(); // cleanup
+
+	// close data cursor
+	err = ib_cursor_close(data_cursor);
+
+	// done.
+	rollback(trx, cursor, row);
 	return true;
 }
 

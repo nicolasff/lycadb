@@ -21,9 +21,12 @@ public:
 	*/
 	bool delete_row(ib_crsr_t cursor);
 
-	//typedef std::tr1::tuple<uint64_t,str,uint64_t,uint64_t> RowData;
+	typedef std::tr1::tuple<uint64_t,str,double> RowData;
 
-	//RowData read(ib_crsr_t cursor);
+	RowData read(ib_crsr_t cursor);
+	static const int ID = 0;
+	static const int VAL = 1;
+	static const int SCORE = 2;
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 };
@@ -39,6 +42,7 @@ public:
 	bool zcard(str key, int &out);
 	bool zadd(str key, double score, str val, int &out);
 	bool zrem(str key, str val, int &out);
+	bool zscore(str key, str val, double &out, bool &found);
 	/*
 	bool lpush(str key, str val, int &out);
 	bool rpush(str key, str val, int &out);

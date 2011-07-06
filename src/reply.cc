@@ -26,6 +26,28 @@ IntReply::write(int fd) const {
 	return (ret == (int)out.size());
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+DoubleReply::DoubleReply(double val) : m_val(val) {
+}
+
+bool
+DoubleReply::write(int fd) const {
+
+	// format output
+	stringstream ss, ssDbl;
+	ssDbl << m_val;
+	string str = ssDbl.str();
+
+	ss << '$' << str.size() << "\r\n" << str << "\r\n";
+
+	// send to fd
+	string out = ss.str();
+	int ret = ::write(fd, out.c_str(), out.size());
+
+	return (ret == (int)out.size());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 StringReply::StringReply(str s) : m_str(s) {

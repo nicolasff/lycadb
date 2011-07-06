@@ -26,6 +26,18 @@ private:
 
 ////////////////////////////////////////////////////////////
 
+class DoubleReply : public Reply {
+
+public:
+	DoubleReply(double val);
+	virtual bool write(int) const;
+
+private:
+	double m_val;
+};
+
+////////////////////////////////////////////////////////////
+
 class StringReply : public Reply {
 
 public:

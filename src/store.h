@@ -52,6 +52,7 @@ public:
 	bool zadd(str key, double score, str val, int &out);
 	bool zcard(str key, int &out);
 	bool zrem(str key, str val, int &out);
+	bool zscore(str key, str val, double &out, bool &found);
 
 	// deletion
 	bool del(str key);
