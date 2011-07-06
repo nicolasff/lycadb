@@ -35,8 +35,8 @@ ZSetTable::create() {
 		return false;
 	}
 
-	// add `score` column as FLOAT (8 bytes)
-	if((err = ib_table_schema_add_col(schema, "score", IB_FLOAT, IB_COL_NONE, 0, sizeof(float))) != DB_SUCCESS) {
+	// add `score` column as DOUBLE
+	if((err = ib_table_schema_add_col(schema, "score", IB_DOUBLE, IB_COL_NONE, 0, sizeof(double))) != DB_SUCCESS) {
 		return false;
 	}
 
