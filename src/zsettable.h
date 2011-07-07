@@ -29,6 +29,7 @@ public:
 	static const int SCORE = 2;
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
+	bool create_score_index(ib_tbl_sch_t &schema);
 };
 
 class ZSetHeadTable : public Table {

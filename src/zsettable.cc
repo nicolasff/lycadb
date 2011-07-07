@@ -44,6 +44,10 @@ ZSetTable::create() {
 		return false;
 	}
 
+	if(!create_score_index(schema)) {
+		return false;
+	}
+
 	// begin transaction
 	return install_schema(schema);
 }
@@ -71,6 +75,30 @@ ZSetTable::create_unique_index(ib_tbl_sch_t &schema) {
 
 	// set unique index.
 	if((err = ib_index_schema_set_clustered(unique_index)) != DB_SUCCESS) {
+		return false;
+	}
+
+	return true;
+}
+
+bool
+ZSetTable::create_score_index(ib_tbl_sch_t &schema) {
+
+	ib_err_t err;
+
+	// create score index.
+	ib_idx_sch_t score_index = NULL;
+	if((err = ib_table_schema_add_index(schema, "SCORE", &score_index)) != DB_SUCCESS) {
+		return false;
+	}
+
+	// add `id` column to index.
+	if((err = ib_index_schema_add_col(score_index, "id", 0)) != DB_SUCCESS) {
+		return false;
+	}
+
+	// add `score` column to index.
+	if((err = ib_index_schema_add_col(score_index, "score", 0)) != DB_SUCCESS) {
 		return false;
 	}
 
