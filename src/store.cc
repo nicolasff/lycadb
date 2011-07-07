@@ -185,6 +185,10 @@ bool
 Store::zscore(str key, str val, double &out, bool &found) {
 	return m_zsets.zscore(key, val, out, found);
 }
+bool
+Store::zcount(str key, double min, double max, int &out) {
+	return m_zsets.zcount(key, min, max, out);
+}
 
 bool
 Store::flushall() {

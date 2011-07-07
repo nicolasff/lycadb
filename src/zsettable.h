@@ -14,6 +14,7 @@ public:
 	bool insert_row(ib_trx_t trx, uint64_t id, str val, double score);
 
 	bool find_row(ib_trx_t trx, uint64_t id, str &val, ib_crsr_t &cursor);
+	bool zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out);
 	/*
 	bool update_row(ib_trx_t trx, uint64_t id,
 			int col_id, uint64_t val);
@@ -44,16 +45,7 @@ public:
 	bool zadd(str key, double score, str val, int &out);
 	bool zrem(str key, str val, int &out);
 	bool zscore(str key, str val, double &out, bool &found);
-	/*
-	bool lpush(str key, str val, int &out);
-	bool rpush(str key, str val, int &out);
-	bool lpop(str key, str &val);
-	bool rpop(str key, str &val);
-
-	void debug_dump(str key);
-	bool lrange(str key, int start, int stop, std::vector<str> &out);
-	bool llen(str key, int &out);
-	*/
+	bool zcount(str key, double min, double max, int &out);
 
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);

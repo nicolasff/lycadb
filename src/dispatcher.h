@@ -63,6 +63,7 @@ private:
 	Reply* zcard(Command &cmd);
 	Reply* zrem(Command &cmd);
 	Reply* zscore(Command &cmd);
+	Reply* zcount(Command &cmd);
 };
 
 

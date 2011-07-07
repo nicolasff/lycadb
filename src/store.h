@@ -53,6 +53,7 @@ public:
 	bool zcard(str key, int &out);
 	bool zrem(str key, str val, int &out);
 	bool zscore(str key, str val, double &out, bool &found);
+	bool zcount(str key, double min, double max, int &out);
 
 	// deletion
 	bool del(str key);

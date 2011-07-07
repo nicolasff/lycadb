@@ -54,6 +54,7 @@ Dispatcher::Dispatcher(Store &s) : m_store(s) {
 	m_functions["ZCARD"] = CommandHandler(bind(&Dispatcher::zcard, this, _1), 1, 1);
 	m_functions["ZREM"] = CommandHandler(bind(&Dispatcher::zrem, this, _1), 2, 2);
 	m_functions["ZSCORE"] = CommandHandler(bind(&Dispatcher::zscore, this, _1), 2, 2);
+	m_functions["ZCOUNT"] = CommandHandler(bind(&Dispatcher::zcount, this, _1), 3, 3);
 }
 
 
@@ -303,4 +304,16 @@ Dispatcher::zscore(Command &cmd)
 		return 0;
 	}
 }
+
+Reply*
+Dispatcher::zcount(Command &cmd)
+{
+	int out;
+	if(m_store.zcount(cmd.argv(1), ::atof(cmd.argv(2).c_str()), ::atof(cmd.argv(3).c_str()), out)) {
+		return new IntReply(out);
+	} else {
+		return 0;
+	}
+}
+
 

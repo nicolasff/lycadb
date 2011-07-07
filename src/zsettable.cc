@@ -137,6 +137,62 @@ ZSetTable::find_row(ib_trx_t trx, uint64_t id, str &val, ib_crsr_t &cursor) {
 }
 
 bool
+ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
+
+	ib_err_t err;
+
+	// table cursor and index cursor.
+	ib_crsr_t cursor = 0, idx_cursor = 0;
+	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
+		cerr << "Couldn't open table." << endl;
+		return false;
+	}
+
+	if((err = ib_cursor_open_index_using_name(cursor, "SCORE", &idx_cursor)) != DB_SUCCESS) {
+		cerr << "Couldn't open secondary index." << endl;
+		return false;
+	}
+
+
+	// create search tuple, handling update case.
+	ib_tpl_t search_row = ib_clust_search_tuple_create(idx_cursor);
+
+	err = ib_tuple_write_u64(search_row, 0, id); // set id column
+	err = ib_tuple_write_double(search_row, 1, min); // set score column
+
+	// look for existing key
+	int pos = -1;
+	err = ib_cursor_moveto(idx_cursor, search_row, IB_CUR_GE, &pos);
+	if((err != DB_SUCCESS && err != DB_END_OF_INDEX) || pos != 0) {
+		cerr << "No row." << endl;
+		out = 0;
+		return true;
+	}
+
+	out = 0;
+	do {
+		// TODO: read row data
+		ZSetTable::RowData rd = read(idx_cursor);
+		double score = get<ZSetTable::SCORE>(rd);
+		cerr << "found score = " << score << endl;
+
+		// cleanup
+		get<ZSetTable::VAL>(rd).reset();
+
+		// count scores
+		if(score >= min && score <= max) {
+			out++;
+			err = ib_cursor_next(idx_cursor);
+		} else { // end of loop
+			break;
+		}
+
+	} while(true);
+
+	return true;
+}
+
+bool
 ZSetTable::insert_row(ib_trx_t trx, uint64_t id, str val, double score) {
 
 	ib_err_t err;
@@ -506,6 +562,36 @@ bool ZSetHeadTable::zscore(str key, str val, double &out, bool &found) {
 	err = ib_cursor_close(data_cursor);
 
 	// done.
+	rollback(trx, cursor, row);
+	return true;
+}
+
+bool
+ZSetHeadTable::zcount(str key, double min, double max, int &out) {
+	ib_trx_t trx;
+	ib_crsr_t cursor = 0;
+	ib_tpl_t row = 0;
+
+	cerr << "ZCOUNT " << key.c_str() << " " << min << " " << max << endl;
+	if(!get_cursor(key, trx, cursor, row)) {
+		return false;
+	}
+
+	uint64_t cur_id = 0;
+	ZSetHeadTable::RowData hrd;
+	if(row == 0) {	// zset doesn't exist, return 0.
+		rollback(trx, cursor, row);
+		out = 0;
+		return true;
+	}
+
+	// find first value with score >= min, and iterate.
+	if(!m_zsets.zcount(trx, cur_id, min, max, out)) {
+	    	cerr << "FAIL" << endl;
+		rollback(trx, cursor, row);
+		return false;
+	}
+
 	rollback(trx, cursor, row);
 	return true;
 }
