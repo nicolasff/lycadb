@@ -23,11 +23,19 @@ public:
 	bool delete_row(ib_crsr_t cursor);
 
 	typedef std::tr1::tuple<uint64_t,str,double> RowData;
+	typedef std::tr1::tuple<uint64_t,double,str> IdxRowData;
 
 	RowData read(ib_crsr_t cursor);
+	IdxRowData read_idx(ib_crsr_t cursor);
+
 	static const int ID = 0;
 	static const int VAL = 1;
 	static const int SCORE = 2;
+
+	static const int IDX_ID = 0;
+	static const int IDX_SCORE = 1;
+	static const int IDX_VAL = 2;
+
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 	bool create_score_index(ib_tbl_sch_t &schema);

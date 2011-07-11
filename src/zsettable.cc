@@ -102,6 +102,11 @@ ZSetTable::create_score_index(ib_tbl_sch_t &schema) {
 		return false;
 	}
 
+	// add `val` column to index.
+	if((err = ib_index_schema_add_col(score_index, "val", 0)) != DB_SUCCESS) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -163,21 +168,23 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 	// look for existing key
 	int pos = -1;
 	err = ib_cursor_moveto(idx_cursor, search_row, IB_CUR_GE, &pos);
-	if((err != DB_SUCCESS && err != DB_END_OF_INDEX) || pos != 0) {
-		cerr << "No row." << endl;
+	if((err != DB_SUCCESS || err == DB_END_OF_INDEX)) {
+		cerr << "No row? pos=" << pos << endl;
 		out = 0;
 		return true;
 	}
 
+    cerr << "pos=" << pos << endl;
+
 	out = 0;
 	do {
 		// TODO: read row data
-		ZSetTable::RowData rd = read(idx_cursor);
-		double score = get<ZSetTable::SCORE>(rd);
+		ZSetTable::IdxRowData ird = read_idx(idx_cursor);
+		double score = get<ZSetTable::IDX_SCORE>(ird);
 		cerr << "found score = " << score << endl;
 
 		// cleanup
-		get<ZSetTable::VAL>(rd).reset();
+		get<ZSetTable::IDX_VAL>(ird).reset();
 
 		// count scores
 		if(score >= min && score <= max) {
@@ -188,6 +195,10 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 		}
 
 	} while(true);
+
+    // cleanup
+    err = ib_cursor_close(cursor);
+    err = ib_cursor_close(idx_cursor);
 
 	return true;
 }
@@ -285,6 +296,33 @@ ZSetTable::read(ib_crsr_t cursor) {
 	ib_tuple_delete(row);
 
 	return rd;
+}
+
+ZSetTable::IdxRowData
+ZSetTable::read_idx(ib_crsr_t cursor) {
+	ib_err_t err;
+
+	ZSetTable::IdxRowData ird;
+
+	// read row
+	ib_tpl_t row = ib_sec_read_tuple_create(cursor);
+	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+		ib_tuple_delete(row);
+		return ird;
+	}
+
+	// extract fields
+	uint64_t id = 0;
+	double score;
+	err = ib_tuple_read_u64(row, 0, &id);
+	err = ib_tuple_read_double(row, 1, &score);
+	str s((const char*)ib_col_get_value(row, 2), ib_col_get_len(row, 2), 1);
+
+	ird = tr1::make_tuple(id, score, s);
+
+	ib_tuple_delete(row);
+
+	return ird;
 }
 
 bool
