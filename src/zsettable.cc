@@ -102,11 +102,6 @@ ZSetTable::create_score_index(ib_tbl_sch_t &schema) {
 		return false;
 	}
 
-	// add `val` column to index.
-	if((err = ib_index_schema_add_col(score_index, "val", 0)) != DB_SUCCESS) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -160,9 +155,10 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 
 
 	// create search tuple, handling update case.
-	ib_tpl_t search_row = ib_clust_search_tuple_create(idx_cursor);
+	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
 
 	err = ib_tuple_write_u64(search_row, 0, id); // set id column
+    cerr << "id=" << id << ", min=" << min << endl;
 	err = ib_tuple_write_double(search_row, 1, min); // set score column
 
 	// look for existing key
@@ -311,12 +307,17 @@ ZSetTable::read_idx(ib_crsr_t cursor) {
 		return ird;
 	}
 
+    // attach the secondary index to the clustered index
+    ib_cursor_set_cluster_access(cursor);
+
 	// extract fields
 	uint64_t id = 0;
 	double score;
 	err = ib_tuple_read_u64(row, 0, &id);
-	err = ib_tuple_read_double(row, 1, &score);
-	str s((const char*)ib_col_get_value(row, 2), ib_col_get_len(row, 2), 1);
+	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
+	err = ib_tuple_read_double(row, 2, &score);
+
+    cerr << "s=(" << s.size() << "): " << s.c_str() << endl;
 
 	ird = tr1::make_tuple(id, score, s);
 
