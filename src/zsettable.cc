@@ -35,8 +35,8 @@ ZSetTable::create() {
 		return false;
 	}
 
-	// add `score` column as DOUBLE
-	if((err = ib_table_schema_add_col(schema, "score", IB_DOUBLE, IB_COL_NONE, 0, sizeof(double))) != DB_SUCCESS) {
+	// add `score` column as string-encoded DOUBLE
+	if((err = ib_table_schema_add_col(schema, "score", IB_CHAR, IB_COL_NONE, 0, 16)) != DB_SUCCESS) {
 		return false;
 	}
 
@@ -156,7 +156,13 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 	// create search tuple, handling update case.
 	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
 	err = ib_tuple_write_u64(search_row, 0, id); // set id column
-	err = ib_tuple_write_double(search_row, 1, min); // set score column
+
+    stringstream ss;
+    ss.width(16);
+    ss.fill('0');
+    ss << right << min;
+    string s_score = ss.str();
+	err = ib_col_set_value(search_row, 1, s_score.c_str(), s_score.size()); // set score column
 
 	// look for existing key
 	int pos = -1;
@@ -214,10 +220,18 @@ ZSetTable::insert_row(ib_trx_t trx, uint64_t id, str val, double score) {
 	// create row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
 
-	// set id, val, prev, next columns
+	// set id, val
 	err = ib_tuple_write_u64(row, 0, id);
 	err = ib_col_set_value(row, 1, val.c_str(), val.size());
-	err = ib_tuple_write_double(row, 2, score);
+
+    // set score
+    stringstream ss;
+    ss.width(16);
+    ss.fill('0');
+    ss << right << score;
+    string s = ss.str();
+    cerr << "s=[" << s << "]" << endl;
+	err = ib_col_set_value(row, 2, s.c_str(), s.size());
 
 	// insert row
 	bool ret = (ib_cursor_insert_row(cursor, row) == DB_SUCCESS);
@@ -282,12 +296,11 @@ ZSetTable::read(ib_crsr_t cursor) {
 
 	// extract fields
 	uint64_t id = 0;
-	double score;
 	err = ib_tuple_read_u64(row, 0, &id);
-	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
-	err = ib_tuple_read_double(row, 2, &score);
+	str val((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
+    string score((const char*)ib_col_get_value(row, 2), ib_col_get_len(row, 2));
 
-	rd = tr1::make_tuple(id, s, score);
+	rd = tr1::make_tuple(id, val, ::atof(score.c_str()));
 
 	ib_tuple_delete(row);
 
@@ -316,9 +329,9 @@ ZSetTable::read_idx(ib_crsr_t cursor) {
 	double score;
 	err = ib_tuple_read_u64(row, 0, &id);
 	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
-	err = ib_tuple_read_double(row, 2, &score);
+	score = ::atof((const char*)ib_col_get_value(row, 2));
 
-    cerr << "s=(" << s.size() << "): '" << s.c_str() << "', score=" << score << endl;
+    cerr << "s=(" << s.size() << "): '" << s.c_str() << "', score=" << score << "=(" << ib_col_get_len(row, 2) << " bytes)'" <<(const char*)ib_col_get_value(row, 2) << "'" << endl;
 
 	ird = tr1::make_tuple(id, score, s);
 
