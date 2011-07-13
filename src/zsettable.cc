@@ -153,12 +153,9 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 		return false;
 	}
 
-
 	// create search tuple, handling update case.
 	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
-
 	err = ib_tuple_write_u64(search_row, 0, id); // set id column
-    cerr << "id=" << id << ", min=" << min << endl;
 	err = ib_tuple_write_double(search_row, 1, min); // set score column
 
 	// look for existing key
@@ -174,21 +171,24 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 
 	out = 0;
 	do {
-		// TODO: read row data
+		// read row data
 		ZSetTable::IdxRowData ird = read_idx(idx_cursor);
 		double score = get<ZSetTable::IDX_SCORE>(ird);
 		cerr << "found score = " << score << endl;
 
-		// cleanup
+		// cleanup row data
 		get<ZSetTable::IDX_VAL>(ird).reset();
 
 		// count scores
 		if(score >= min && score <= max) {
 			out++;
-			err = ib_cursor_next(idx_cursor);
 		} else { // end of loop
-			break;
+			//break;
 		}
+
+        cerr << "Move to the next row" << endl;
+		if((err = ib_cursor_next(idx_cursor)) == DB_END_OF_INDEX)
+            break;
 
 	} while(true);
 
@@ -303,6 +303,7 @@ ZSetTable::read_idx(ib_crsr_t cursor) {
 	// read row
 	ib_tpl_t row = ib_sec_read_tuple_create(cursor);
 	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
+        cerr << ib_strerror(err) << endl;
 		ib_tuple_delete(row);
 		return ird;
 	}
@@ -317,7 +318,7 @@ ZSetTable::read_idx(ib_crsr_t cursor) {
 	str s((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
 	err = ib_tuple_read_double(row, 2, &score);
 
-    cerr << "s=(" << s.size() << "): " << s.c_str() << endl;
+    cerr << "s=(" << s.size() << "): '" << s.c_str() << "', score=" << score << endl;
 
 	ird = tr1::make_tuple(id, score, s);
 
@@ -623,6 +624,11 @@ ZSetHeadTable::zcount(str key, double min, double max, int &out) {
 		out = 0;
 		return true;
 	}
+
+    // read meta-info about the zset.
+	hrd = read(cursor);
+	cur_id = get<ZSetHeadTable::ID>(hrd);
+    get<ZSetHeadTable::KEY>(hrd).reset();   // cleanup
 
 	// find first value with score >= min, and iterate.
 	if(!m_zsets.zcount(trx, cur_id, min, max, out)) {
