@@ -137,11 +137,51 @@ ZSetTable::find_row(ib_trx_t trx, uint64_t id, str &val, ib_crsr_t &cursor) {
 }
 
 void ZSetTable::pad_score(double score, string &ret) {
-    stringstream ss;
-    ss.width(16);
-    ss.fill('0');
-    ss << right << score;
-    ret = ss.str();
+	stringstream ss;
+	ss.width(16);
+	ss.fill('0');
+	ss << right << score;
+	ret = ss.str();
+}
+
+bool
+ZSetTable::position_cursor_by_score(ib_trx_t trx, uint64_t id, double min, ib_crsr_t &clust_cursor, ib_crsr_t &idx_cursor) {
+
+	ib_err_t err;
+
+	// table cursor and index cursor.
+	clust_cursor = 0;
+	idx_cursor = 0;
+	if((err = ib_cursor_open_table_using_id(m_tid, trx, &clust_cursor)) != DB_SUCCESS) {
+		return false;
+	}
+
+	if((err = ib_cursor_open_index_using_name(clust_cursor, "SCORE", &idx_cursor)) != DB_SUCCESS) {
+		return false;
+	}
+
+	// attach the secondary index to the clustered index
+	ib_cursor_set_cluster_access(idx_cursor);
+
+	// create search tuple, handling update case.
+	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
+	err = ib_tuple_write_u64(search_row, 0, id); // set id column
+
+
+	string s_score;
+	pad_score(min, s_score);
+	err = ib_col_set_value(search_row, 1, s_score.c_str(), s_score.size()); // set score column
+
+	// look for existing key
+	int pos = -1;
+	err = ib_cursor_moveto(idx_cursor, search_row, IB_CUR_GE, &pos);
+	if((err != DB_SUCCESS || err == DB_END_OF_INDEX)) {
+		err = ib_cursor_close(clust_cursor);
+		idx_cursor = 0;
+		return true;
+	}
+	
+	return true;
 }
 
 bool
@@ -150,41 +190,23 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 	ib_err_t err;
 
 	// table cursor and index cursor.
-	ib_crsr_t cursor = 0, idx_cursor = 0;
-	if((err = ib_cursor_open_table_using_id(m_tid, trx, &cursor)) != DB_SUCCESS) {
+	ib_crsr_t clust_cursor = 0, idx_cursor = 0;
+
+	// position cursors
+	if(!position_cursor_by_score(trx, id, min, clust_cursor, idx_cursor)) {
 		return false;
-	}
-
-	if((err = ib_cursor_open_index_using_name(cursor, "SCORE", &idx_cursor)) != DB_SUCCESS) {
-		return false;
-	}
-
-    // attach the secondary index to the clustered index
-    ib_cursor_set_cluster_access(idx_cursor);
-
-	// create search tuple, handling update case.
-	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
-	err = ib_tuple_write_u64(search_row, 0, id); // set id column
-
-
-    string s_score;
-    pad_score(min, s_score);
-	err = ib_col_set_value(search_row, 1, s_score.c_str(), s_score.size()); // set score column
-
-	// look for existing key
-	int pos = -1;
-	err = ib_cursor_moveto(idx_cursor, search_row, IB_CUR_GE, &pos);
-	if((err != DB_SUCCESS || err == DB_END_OF_INDEX)) {
-		out = 0;
-		return true;
 	}
 
 	out = 0;
+	if(!idx_cursor) { // no data, return 0;
+		err = ib_cursor_close(clust_cursor);
+		return true;
+	}
+
 	do {
-		// read row data
+		// read row data and extract score
 		ZSetTable::IdxRowData ird = read_idx(idx_cursor);
 		double score = get<ZSetTable::IDX_SCORE>(ird);
-		//cerr << "found score = " << score << endl;
 
 		// cleanup row data
 		get<ZSetTable::IDX_VAL>(ird).reset();
@@ -196,15 +218,15 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 			break;
 		}
 
-        //cerr << "Move to the next row" << endl;
+		// move cursor to the next row until end of index
 		if((err = ib_cursor_next(idx_cursor)) == DB_END_OF_INDEX)
-            break;
+			break;
 
 	} while(true);
 
-    // cleanup
-    err = ib_cursor_close(cursor);
-    err = ib_cursor_close(idx_cursor);
+	// cleanup
+	err = ib_cursor_close(clust_cursor);
+	err = ib_cursor_close(idx_cursor);
 
 	return true;
 }
@@ -228,9 +250,9 @@ ZSetTable::insert_row(ib_trx_t trx, uint64_t id, str val, double score) {
 	err = ib_tuple_write_u64(row, 0, id);
 	err = ib_col_set_value(row, 1, val.c_str(), val.size());
 
-    // set score
-    string s;
-    pad_score(score, s);
+	// set score
+	string s;
+	pad_score(score, s);
 	err = ib_col_set_value(row, 2, s.c_str(), s.size());
 
 	// insert row
@@ -298,7 +320,7 @@ ZSetTable::read(ib_crsr_t cursor) {
 	uint64_t id = 0;
 	err = ib_tuple_read_u64(row, 0, &id);
 	str val((const char*)ib_col_get_value(row, 1), ib_col_get_len(row, 1), 1);
-    string score((const char*)ib_col_get_value(row, 2), ib_col_get_len(row, 2));
+	string score((const char*)ib_col_get_value(row, 2), ib_col_get_len(row, 2));
 
 	rd = tr1::make_tuple(id, val, ::atof(score.c_str()));
 
@@ -316,7 +338,7 @@ ZSetTable::read_idx(ib_crsr_t cursor) {
 	// read row
 	ib_tpl_t row = ib_clust_read_tuple_create(cursor);
 	if((err = ib_cursor_read_row(cursor, row)) != DB_SUCCESS) {
-        cerr << ib_strerror(err) << endl;
+		cerr << ib_strerror(err) << endl;
 		ib_tuple_delete(row);
 		return ird;
 	}
@@ -632,14 +654,14 @@ ZSetHeadTable::zcount(str key, double min, double max, int &out) {
 		return true;
 	}
 
-    // read meta-info about the zset.
+	// read meta-info about the zset.
 	hrd = read(cursor);
 	cur_id = get<ZSetHeadTable::ID>(hrd);
-    get<ZSetHeadTable::KEY>(hrd).reset();   // cleanup
+	get<ZSetHeadTable::KEY>(hrd).reset();   // cleanup
 
 	// find first value with score >= min, and iterate.
 	if(!m_zsets.zcount(trx, cur_id, min, max, out)) {
-	    	cerr << "FAIL" << endl;
+		cerr << "FAIL" << endl;
 		rollback(trx, cursor, row);
 		return false;
 	}
