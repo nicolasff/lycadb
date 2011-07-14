@@ -14,3 +14,4 @@ $redis ZADD x 8 i
 $redis ZADD x 9 j
 
 $redis ZCOUNT x 3 7
+$redis ZCOUNT x 20 20

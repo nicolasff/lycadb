@@ -167,7 +167,6 @@ ZSetTable::position_cursor_by_score(ib_trx_t trx, uint64_t id, double min, ib_cr
 	ib_tpl_t search_row = ib_sec_search_tuple_create(idx_cursor);
 	err = ib_tuple_write_u64(search_row, 0, id); // set id column
 
-
 	string s_score;
 	pad_score(min, s_score);
 	err = ib_col_set_value(search_row, 1, s_score.c_str(), s_score.size()); // set score column
@@ -175,9 +174,14 @@ ZSetTable::position_cursor_by_score(ib_trx_t trx, uint64_t id, double min, ib_cr
 	// look for existing key
 	int pos = -1;
 	err = ib_cursor_moveto(idx_cursor, search_row, IB_CUR_GE, &pos);
+
+	// cleanup search row
+	ib_tuple_delete(search_row);
+
 	if((err != DB_SUCCESS || err == DB_END_OF_INDEX)) {
 		err = ib_cursor_close(clust_cursor);
-		idx_cursor = 0;
+		err = ib_cursor_close(idx_cursor);
+		idx_cursor = clust_cursor = 0;
 		return true;
 	}
 	
@@ -199,7 +203,6 @@ ZSetTable::zcount(ib_trx_t trx, uint64_t id, double min, double max, int &out) {
 
 	out = 0;
 	if(!idx_cursor) { // no data, return 0;
-		err = ib_cursor_close(clust_cursor);
 		return true;
 	}
 
