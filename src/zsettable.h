@@ -39,6 +39,7 @@ public:
 private:
 	bool create_unique_index(ib_tbl_sch_t &schema);
 	bool create_score_index(ib_tbl_sch_t &schema);
+    void pad_score(double score, std::string &ret);
 };
 
 class ZSetHeadTable : public Table {
